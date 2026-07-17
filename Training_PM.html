@@ -1,0 +1,1546 @@
+<!-- ========================================= -->
+<!-- PARTIE 1 : PROCESSUS S&OP ET RÔLES        -->
+<!-- ========================================= -->
+<div v-if="currentPartNumber === 1 || currentTab === 'p1' || currentTab === 'part1'" class="space-y-8 animate-fade-in pb-10 flex flex-col min-h-[calc(100vh-100px)]">
+  <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
+     <div class="absolute top-0 left-0 w-1.5 h-full bg-emerald-600"></div>
+    <h2 class="text-2xl font-bold text-slate-800 mb-2 flex items-center">
+      <i class="fa-solid fa-project-diagram text-blue-500 mr-3"></i> 
+      <span v-if="!isEditMode">{{ content.pm_p1_title || 'Partie 1 : Le Cycle S&OP' }}</span>
+      <input v-else v-model="content.pm_p3_title" class="border p-1 w-full bg-yellow-50 text-xl font-bold">
+    </h2>
+    <div v-if="!isEditMode" class="text-slate-700 text-[15px] leading-relaxed pl-2 cms-content" v-html="content.pm_p1_desc || '<p>Dans OPTIMA, l\'appel de charge se fait via des modèles de plans de charge pré-paramétrés dans Google Sheet.<br><strong>Votre rôle principal dans l\'application est de générer les appels de charge et de les maintenir à jour tout au long de la vie de vos projets.</strong></p>'"></div>
+     <div v-else class="pl-2"><html-editor v-model="content.pm_p1_desc" class="min-h-[100px]" placeholder="Texte d'introduction..."></html-editor></div>
+  </div>
+  <!-- Intro Section -->
+  
+ <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
+    <h3 class="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-6 text-xl flex items-center pl-2">
+      <i class="fa-solid fa-balance-scale text-blue-500 mr-3"></i> 
+      <span v-if="!isEditMode">{{ content.pm_p1_s5_main_title || 'Introduction au Cycle S&OP' }}</span>
+      <input v-else v-model="content.pm_p1_s5_main_title" class="border p-1 w-full bg-yellow-50 text-sm font-normal" placeholder="Titre de la section">
+    </h3>
+    <div class="pl-2">
+      <div v-if="!isEditMode" class="text-slate-700 mb-6 font-medium text-[15px] leading-relaxed cms-content" v-html="content.pm_p1_s5_intro || '<p>Découvrez le fonctionnement du cycle S&OP et votre rôle en tant que Project Manager ou Sales.</p>'"></div>
+      <div v-else class="mb-6"><html-editor v-model="content.pm_p1_s5_intro" placeholder="Introduction (HTML)"></html-editor></div>
+      
+      <div class="relative w-full aspect-video rounded-xl overflow-hidden border border-slate-200 shadow-md bg-slate-100 flex items-center justify-center">
+        <iframe 
+          src="https://docs.google.com/presentation/d/11OS-TNCQXm-rayUJDfuBODY3gjuCRuUQdYOFdfftVGo/embed?start=false&loop=false&delayms=3000&slide=id.g3e377d0dfa4_0_1805" 
+          frameborder="0" width="100%" height="100%" allowfullscreen="true" class="absolute top-0 left-0 w-full h-full">
+        </iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- Puzzle Game -->
+ <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
+     <div class="absolute top-0 left-0 w-1.5 h-full bg-blue-500"></div>
+  <h3 class="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-6 text-xl flex items-center">
+    <i class="fa-solid fa-mouse-pointer text-blue-500 mr-3"></i>
+    <span v-if="!isEditMode">{{ content.pm_p1_game_title || 'Jeu : Reconstituez les étapes' }}</span>
+    <input v-else v-model="content.pm_p1_game_title" class="border p-1 bg-yellow-50 flex-1">
+  </h3>
+  <div class="max-w-5xl mx-auto">
+    <p class="text-sm text-slate-500 mb-6 uppercase tracking-wide font-semibold text-center">
+      Reconstituez les 5 étapes de la procédure S&OP, et attribuez-y le Responsable et l'Instance correspondante.
+    </p>
+    <div class="space-y-4">
+      <div v-for="item in puzzleItems" :key="item.id"
+           :class="['w-full flex flex-col p-4 rounded-xl border transition-all duration-200 gap-4', item.order !== null ? 'bg-primary/5 border-primary/30 shadow-inner' : 'bg-white border-slate-200 hover:border-primary/40 shadow-sm']">
+        
+        <div class="flex flex-col xl:flex-row items-center w-full gap-4">
+          <div class="flex-1 flex items-center w-full">
+            
+            <button @click="handlePuzzleOrderClick(item); content.p1_gameStatus = null;"
+                    :class="[
+                      'w-10 h-10 flex items-center justify-center rounded-full text-sm font-bold mr-4 shrink-0 transition-colors shadow-sm border',
+                      {
+                        'border-emerald-500 bg-emerald-50 text-emerald-700': content.p1_gameStatus && String(item.order || '') === (content['ans_order_'+item.id] ? String(content['ans_order_'+item.id]) : ''),
+                        'border-red-500 bg-red-50 text-red-700': content.p1_gameStatus && String(item.order || '') !== (content['ans_order_'+item.id] ? String(content['ans_order_'+item.id]) : ''),
+                        'bg-primary text-white border-transparent': item.order !== null && !content.p1_gameStatus,
+                        'bg-slate-100 text-slate-400 hover:bg-slate-200 border-transparent': item.order === null && !content.p1_gameStatus
+                      }
+                    ]">
+              {{ item.order !== null ? item.order : '?' }}
+            </button>
+
+            <span v-if="!isEditMode" class="text-left font-medium text-slate-700 leading-relaxed text-sm cms-content" v-html="content[item.textKey] || item.defaultText"></span>
+            <input v-else v-model="content[item.textKey]" class="flex-1 bg-yellow-50 border border-slate-300 rounded p-1 text-sm">
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-3 w-full xl:w-auto shrink-0 border-t xl:border-t-0 xl:border-l border-slate-200 pt-3 xl:pt-0 xl:pl-4">
+            
+            <div class="flex flex-col">
+              <span class="text-[9px] uppercase font-bold text-slate-400 mb-1 ml-1">Responsable principal</span>
+              <select v-model="content['p1_user_resp_' + item.id]" @change="content.p1_gameStatus = null" 
+                      :class="[
+                        'p-2 border rounded-lg text-xs outline-none transition-colors',
+                        {
+                          'border-emerald-500 text-emerald-700 bg-emerald-50 focus:border-emerald-500': content.p1_gameStatus && content['p1_user_resp_' + item.id] === (content['ans_resp_'+item.id] || ''),
+                          'border-red-500 text-red-700 bg-red-50 focus:border-red-500': content.p1_gameStatus && content['p1_user_resp_' + item.id] !== (content['ans_resp_'+item.id] || ''),
+                          'border-slate-300 text-slate-700 focus:border-primary bg-white': !content.p1_gameStatus
+                        }
+                      ]">
+                <option value="" disabled>-- Choisir --</option>
+                <option value="sop_mgr">S&OP Manager</option>
+                <option value="pm">Responsable Prop. / PM</option>
+                <option value="mgr">Manager</option>
+                <option value="copil">Copil BU</option>
+              </select>
+            </div>
+
+            <div class="flex flex-col">
+              <span class="text-[9px] uppercase font-bold text-slate-400 mb-1 ml-1">Instance / Réunion</span>
+              <select v-model="content['p1_user_inst_' + item.id]" @change="content.p1_gameStatus = null" 
+                      :class="[
+                        'p-2 border rounded-lg text-xs outline-none transition-colors',
+                        {
+                          'border-emerald-500 text-emerald-700 bg-emerald-50 focus:border-emerald-500': content.p1_gameStatus && content['p1_user_inst_' + item.id] === (content['ans_inst_'+item.id] || ''),
+                          'border-red-500 text-red-700 bg-red-50 focus:border-red-500': content.p1_gameStatus && content['p1_user_inst_' + item.id] !== (content['ans_inst_'+item.id] || ''),
+                          'border-slate-300 text-slate-700 focus:border-primary bg-white': !content.p1_gameStatus
+                        }
+                      ]">
+                <option value="" disabled>-- Choisir --</option>
+                <option value="none">Pas d'instance</option>
+                <option value="avant_demande">Mise à jour projet / Revue Demande</option>
+                <option value="proj">Réunion Projet</option>
+                <option value="rituel_sop">Rituel S&OP</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="isEditMode" class="w-full mt-2 p-3 bg-amber-50 border border-amber-300 rounded-lg flex flex-col sm:flex-row items-center gap-4 text-xs shadow-inner">
+          <span class="font-bold text-amber-800 flex items-center shrink-0"><i class="fa-solid fa-gear mr-2"></i> Réponse attendue :</span>
+          <label class="flex items-center gap-2">Ordre: <input type="number" v-model="content['ans_order_'+item.id]" placeholder="Vide = ?" class="w-16 p-1 border border-amber-200 rounded outline-none"></label>
+          <label class="flex items-center gap-2">Resp: 
+            <select v-model="content['ans_resp_'+item.id]" class="p-1 border border-amber-200 rounded outline-none bg-white">
+                <option value="">-- Choisir --</option>
+                <option value="sop_mgr">S&OP Manager</option>
+                <option value="pm">Responsable Prop. / PM</option>
+                <option value="mgr">Manager</option>
+                <option value="copil">Copil BU</option>
+            </select>
+          </label>
+          <label class="flex items-center gap-2">Inst: 
+            <select v-model="content['ans_inst_'+item.id]" class="p-1 border border-amber-200 rounded outline-none bg-white">
+                <option value="">-- Choisir --</option>
+                <option value="none">Pas d'instance</option>
+                <option value="avant_demande">Mise à jour projet / Revue Demande</option>
+                <option value="proj">Réunion Projet</option>
+                <option value="rituel_sop">Rituel S&OP</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-6 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div class="text-xs text-slate-500 flex-1"><i class="fa-solid fa-info-circle mr-1"></i> Cliquez sur la pastille '?' pour définir l'ordre chronologique. Cliquez à nouveau dessus pour recommencer.</div>
+      
+      <button type="button" 
+              @click.prevent="
+  content.p1_gameStatus = puzzleItems.every(i => 
+    String(i.order || '') === (content['ans_order_'+i.id] ? String(content['ans_order_'+i.id]) : '') && 
+    (content['p1_user_resp_' + i.id] || '') === (content['ans_resp_'+i.id] || '') && 
+    (content['p1_user_inst_' + i.id] || '') === (content['ans_inst_'+i.id] || '')
+  ) ? 'success' : 'error';
+  
+  if(content.p1_gameStatus === 'success') {
+     puzzleSuccess = true;
+     puzzleError = false;
+     saveTaskProgress('puzzle_p1'); // SAUVEGARDE L'ÉTAT
+  }
+              " 
+              :disabled="content.p1_gameStatus === 'success'" 
+              :class="['w-full md:w-auto font-bold py-2.5 px-6 rounded-xl shadow-sm transition-colors text-sm', content.p1_gameStatus === 'success' ? 'bg-green-600 text-white cursor-not-allowed' : 'bg-slate-800 hover:bg-slate-700 text-white']">
+        <template v-if="content.p1_gameStatus === 'success'"><i class="fa-solid fa-check mr-2"></i> Validé</template>
+        <template v-else>Vérifier ma réponse</template>
+      </button>
+    </div>
+    
+    <div v-if="content.p1_gameStatus === 'error'" class="mt-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm font-bold text-center animate-pulse border border-red-200">
+      <i class="fa-solid fa-times-circle mr-2 text-lg"></i> Certaines réponses sont incorrectes. Vérifiez les éléments en rouge.
+    </div>
+    <div v-if="content.p1_gameStatus === 'success'" class="mt-4 p-3 bg-green-50 text-green-700 rounded-lg text-sm font-bold text-center animate-fade-in border border-green-200">
+      <i class="fa-solid fa-check-circle mr-2 text-lg"></i> Félicitations, vous avez reconstitué le processus avec succès !
+    </div>
+  </div>
+</div>
+  <!-- Section Rôle Manager (Visible uniquement si succès au jeu) -->
+  <transition name="fade">
+    <div v-if="puzzleSuccess || isDevMode" class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden mt-6 mb-8">
+      <h3 class="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-6 text-xl flex items-center pl-2">
+        <i class="fa-solid fa-user-shield text-blue-600 mr-3"></i> 
+        <span v-if="!isEditMode">{{ content.pm_p1_role_main_title || 'Les Rôles et Responsabilités' }}</span>
+        <input v-else v-model="content.pm_p1_role_main_title" class="border p-1 bg-yellow-50 text-sm flex-1">
+      </h3>
+      <div class="pl-2">
+        <div v-if="!isEditMode" class="text-slate-700 mb-4 font-medium text-[15px] leading-relaxed cms-content" v-html="content.pm_p1_role_intro || '<p>Le fonctionnement d\'OPTIMA repose sur un principe strict de séparation des droits.</p>'"></div>
+        <div v-else class="mb-4"><html-editor v-model="content.pm_p1_role_intro" class="min-h-[100px]"></html-editor></div>
+        
+        <div v-if="!isEditMode" class="text-slate-600 mb-8 text-sm leading-relaxed cms-content p-4 bg-slate-50 border border-slate-200 rounded-lg" v-html="content.pm_p1_role_stack_note || '<p>Important : Les rôles sont cumulables.</p>'"></div>
+        <div v-else class="mb-8"><html-editor v-model="content.pm_p1_role_stack_note" class="min-h-[100px]"></html-editor></div>
+
+        <!-- Onglets des Rôles -->
+        <div class="flex overflow-x-auto gap-2 mb-6 border-b border-slate-200 pb-2 custom-scrollbar">
+           <button type="button" @click.prevent="roleTab = 'head_sales'" :class="roleTab === 'head_sales' ? 'bg-purple-100 text-purple-700 font-bold border-b-2 border-purple-500' : 'text-slate-500 hover:bg-slate-100'" class="px-4 py-2 rounded-t-lg transition-colors whitespace-nowrap">Head of Sales</button>
+           <button type="button" @click.prevent="roleTab = 'prop_mgr'" :class="roleTab === 'prop_mgr' ? 'bg-purple-100 text-purple-700 font-bold border-b-2 border-purple-500' : 'text-slate-500 hover:bg-slate-100'" class="px-4 py-2 rounded-t-lg transition-colors whitespace-nowrap">Proposal Manager</button>
+           <button type="button" @click.prevent="roleTab = 'resp_pm'" :class="roleTab === 'resp_pm' ? 'bg-purple-100 text-purple-700 font-bold border-b-2 border-purple-500' : 'text-slate-500 hover:bg-slate-100'" class="px-4 py-2 rounded-t-lg transition-colors whitespace-nowrap">PM Manager</button>
+           <button type="button" @click.prevent="roleTab = 'pm'" :class="roleTab === 'pm' ? 'bg-purple-100 text-purple-700 font-bold border-b-2 border-purple-500' : 'text-slate-500 hover:bg-slate-100'" class="px-4 py-2 rounded-t-lg transition-colors whitespace-nowrap">Project Manager</button>
+           <button type="button" @click.prevent="roleTab = 'manager'" :class="roleTab === 'manager' ? 'bg-purple-100 text-purple-700 font-bold border-b-2 border-purple-500' : 'text-slate-500 hover:bg-slate-100'" class="px-4 py-2 rounded-t-lg transition-colors whitespace-nowrap">Manager (Département)</button>
+        </div>
+
+        <!-- Contenu dynamique du rôle sélectionné -->
+        <div class="animate-fade-in" :key="roleTab">
+           <div class="mb-4">
+              <h4 v-if="!isEditMode" class="font-bold text-slate-800 text-lg">{{ content['role_'+roleTab+'_title'] || 'Titre du rôle' }}</h4>
+              <input v-else v-model="content['role_'+roleTab+'_title']" class="border p-1 bg-yellow-50 font-bold w-full" placeholder="Titre du rôle">
+              <div v-if="!isEditMode" class="text-sm text-slate-600 mt-1 cms-content" v-html="content['role_'+roleTab+'_desc'] || '<p>Description du rôle.</p>'"></div>
+              <div v-else class="mt-1"><html-editor v-model="content['role_'+roleTab+'_desc']" class="min-h-[80px]" placeholder="Description"></html-editor></div>
+           </div>
+
+           <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div class="bg-emerald-50/50 p-6 rounded-xl border border-emerald-200 shadow-sm flex flex-col h-full">
+                <h4 class="font-bold text-emerald-800 mb-5 flex items-center text-lg"><i class="fa-solid fa-check-circle mr-2 text-blue-600"></i> Ce que je peux faire</h4>
+                <div v-if="!isEditMode" class="text-sm text-slate-700 flex-1 cms-content" v-html="content['role_'+roleTab+'_do'] || '<ul><li>Action 1</li></ul>'"></div>
+                <div v-else class="flex-1"><html-editor v-model="content['role_'+roleTab+'_do']" class="h-full min-h-[150px]"></html-editor></div>
+              </div>
+              <div class="bg-red-50/50 p-6 rounded-xl border border-red-200 shadow-sm flex flex-col h-full">
+                <h4 class="font-bold text-red-800 mb-5 flex items-center text-lg"><i class="fa-solid fa-ban mr-2 text-red-600"></i> Ce que je ne peux pas faire</h4>
+                <div v-if="!isEditMode" class="text-sm text-slate-700 flex-1 cms-content" v-html="content['role_'+roleTab+'_dont'] || '<ul><li>Action interdite</li></ul>'"></div>
+                <div v-else class="flex-1"><html-editor v-model="content['role_'+roleTab+'_dont']" class="h-full min-h-[150px]"></html-editor></div>
+              </div>
+           </div>
+        </div>
+
+      </div>
+    </div>
+  </transition>
+
+  <!-- Custom Validation Button avec Forçage Manuel -->
+  <div class="mt-auto pt-6 flex justify-end">
+    <button type="button" 
+        onclick="setTimeout(() => window.scrollTo({top: 0, behavior: 'smooth'}), 100)"
+        @click.prevent="if(typeof unlockedParts !== 'undefined' && !unlockedParts.includes(2)) { unlockedParts.push(2); } currentTab = String(currentTab).includes('part') ? 'part2' : 'p2'; content.p2Tab = 'A';" 
+        :disabled="!puzzleSuccess && !isDevMode" 
+        :class="['w-full md:w-auto shadow-md py-3 px-8 text-base font-bold transition-all rounded-xl', (puzzleSuccess || isDevMode) ? 'btn-primary hover:-translate-y-0.5' : 'bg-slate-200 text-slate-400 cursor-not-allowed']">
+  Passer à la Partie 2 <i class="fa-solid fa-arrow-right ml-2"></i>
+</button>
+  </div>
+
+</div>
+
+<!-- ========================================= -->
+<!-- PARTIE 2 : LES RÉFÉRENTIELS               -->
+<!-- ========================================= -->
+<div v-if="currentPartNumber === 2" class="space-y-6 animate-fade-in pb-10 flex flex-col min-h-[calc(100vh-100px)]">
+
+  <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
+    <div class="absolute top-0 left-0 w-1.5 h-full bg-emerald-600"></div>
+    <h2 class="text-2xl font-bold text-slate-800 mb-2 flex items-center">
+      <i class="fa-solid fa-database text-blue-500 mr-3"></i> 
+      <span v-if="!isEditMode">{{ content.pm_p2_title || "Partie 2 : Maîtriser les Référentiels" }}</span>
+      <input v-else v-model="content.pm_p2_title" class="border p-1 w-full bg-yellow-50 text-xl font-bold">
+    </h2>
+    
+    <!-- Utilisation des backticks (`) pour englober le HTML sans bloquer sur les apostrophes -->
+    <div v-if="!isEditMode" class="text-slate-700 text-[15px] leading-relaxed pl-2 cms-content" v-html="content.pm_p2_desc || `<p>Dans OPTIMA, l'appel de charge se fait via des modèles de plans de charge pré-paramétrés dans Google Sheet.<br><strong>Votre rôle principal dans l'application est de générer les appels de charge et de les maintenir à jour tout au long de la vie de vos projets.</strong></p>`"></div>
+    <div v-else class="pl-2"><html-editor v-model="content.pm_p2_desc" class="min-h-[100px]" placeholder="Texte d'introduction..."></html-editor></div>
+
+    <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 mt-8">
+      <button @click.prevent="content.p2Tab = 'A'; window.scrollTo({top: 0, behavior: 'smooth'});" 
+              :class="['px-6 py-3 rounded-xl font-bold transition-all flex items-center justify-between sm:justify-center shadow-sm', 
+                       (!content.p2Tab || content.p2Tab === 'A') ? 'bg-blue-600 text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50']">
+        <span>A. Référentiel actuel</span>
+        <i v-if="content.p2a_exStatus === 'success'" 
+           :class="['fa-solid fa-check-circle ml-3 text-lg', (!content.p2Tab || content.p2Tab === 'A') ? 'text-green-300' : 'text-emerald-500']"></i>
+      </button>
+      
+      <button @click.prevent="content.p2Tab = 'B'; window.scrollTo({top: 0, behavior: 'smooth'});" 
+              :class="['px-6 py-3 rounded-xl font-bold transition-all flex items-center justify-between sm:justify-center shadow-sm', 
+                       content.p2Tab === 'B' ? 'bg-blue-600 text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50']">
+        <span>B. Cycle et statuts du projet</span>
+        <i v-if="content.p2b_gameStatus === 'success'" 
+           :class="['fa-solid fa-check-circle ml-3 text-lg', content.p2Tab === 'B' ? 'text-green-300' : 'text-emerald-500']"></i>
+      </button>
+    </div>
+  </div>
+
+  <div v-if="!content.p2Tab || content.p2Tab === 'A'" class="space-y-6 animate-fade-in">
+        
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
+      <div class="xl:col-span-7 flex flex-col space-y-6">
+          <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden shrink-0">
+              <h3 class="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-6 text-xl flex items-center pl-2">
+                  <i class="fa-solid fa-sitemap text-blue-500 mr-3"></i> 
+                  <span v-if="!isEditMode">{{ content.pm_p2_org_title || "Le Référentiel de l'Organisation" }}</span>
+                  <input v-else v-model="content.pm_p2_org_title" class="border p-1 w-full bg-yellow-50 text-sm font-normal" placeholder="Titre Organisation">
+              </h3>
+              
+              <div class="pl-2 flex flex-col md:flex-row gap-8">
+                  <div class="flex-1 space-y-0 font-sans relative">
+                      <p class="text-sm text-slate-600 mb-6 pl-2">L'architecture des équipes reflète directement l'organisation financière et physique de l'entreprise.</p>
+                      <div class="bg-white border border-blue-200 rounded-xl p-4 flex items-start shadow-sm relative z-10 w-full sm:w-80">
+                          <div class="bg-blue-100 text-blue-700 w-10 h-10 rounded-lg flex items-center justify-center mr-4 shrink-0"><i class="fa-solid fa-building text-lg"></i></div>
+                          <div>
+                              <h4 class="font-bold text-sm text-slate-800">1. Business Unit (BU)</h4>
+                              <p class="text-xs text-slate-500 mt-1 leading-relaxed">Niveau le plus haut. Elles correspondent aux Centres de coûts (Cost centers) dans l'ERP. Ex: AT11, AT13.</p>
+                          </div>
+                      </div>
+                      
+                      <div class="w-1 h-6 bg-slate-300 ml-9 my-0 relative z-0"></div>
+                      
+                      <div class="bg-white border border-amber-200 rounded-xl p-4 flex items-start shadow-sm ml-4 relative z-10 w-full sm:w-80">
+                          <div class="bg-amber-100 text-amber-700 w-10 h-10 rounded-lg flex items-center justify-center mr-4 shrink-0"><i class="fa-solid fa-users text-lg"></i></div>
+                          <div>
+                              <h4 class="font-bold text-sm text-slate-800">2. Département (Cost Center)</h4>
+                              <p class="text-xs text-slate-500 mt-1 leading-relaxed">Sous-centres de coûts (Sub cost centers). Ex: AT11001. C'est ici qu'est défini le Taux de frais généraux par défaut de l'équipe.</p>
+                          </div>
+                      </div>
+                      
+                      <div class="w-1 h-6 bg-slate-300 ml-14 my-0 relative z-0"></div>
+                      
+                      <div class="bg-white border border-emerald-200 rounded-xl p-4 flex items-start shadow-sm ml-8 relative z-10 w-full sm:w-80">
+                          <div class="bg-emerald-100 text-emerald-700 w-10 h-10 rounded-lg flex items-center justify-center mr-4 shrink-0"><i class="fa-solid fa-layer-group text-lg"></i></div>
+                          <div>
+                              <h4 class="font-bold text-sm text-slate-800">3. UAP / APU</h4>
+                              <p class="text-xs text-slate-500 mt-1 leading-relaxed">Unités Autonomes de Production. Elles définissent la répartition physique ou opérationnelle au sein d'un département.</p>
+                          </div>
+                      </div>
+                  </div>
+
+              </div>
+          </div>
+
+          <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden shrink-0">
+              <h3 class="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 text-lg flex items-center"><i class="fa-solid fa-table text-blue-500 mr-3"></i> Base BU & Départements</h3>
+              
+              <div class="mb-4 relative shrink-0">
+                  <input type="text" placeholder="Rechercher Code BU, BU, Dept..." v-model="searchBU" class="w-full border border-slate-300 p-2.5 pl-10 rounded-xl text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-slate-50" />
+                  <i class="fa-solid fa-search absolute left-4 top-3.5 text-slate-400"></i>
+              </div>
+              
+              <div class="border border-slate-200 rounded-xl overflow-y-auto overflow-x-auto bg-white shadow-inner max-h-[350px]">
+                  <table class="w-full text-left text-xs whitespace-nowrap block min-w-full">
+                      <thead class="bg-slate-50 text-slate-500 sticky top-0 border-b border-slate-200 shadow-sm z-10 w-full table">
+                          <tr>
+                              <th class="p-3 w-1/4">Code BU</th>
+                              <th class="p-3 w-1/4">BU</th>
+                              <th class="p-3 w-1/4">Code Dept</th>
+                              <th class="p-3 w-1/4">Département</th>
+                          </tr>
+                      </thead>
+                      <tbody class="divide-y divide-slate-100 w-full table">
+                          <tr v-for="(b, i) in filteredBU" :key="'bu'+i" class="hover:bg-blue-50 transition-colors">
+                              <td class="p-3 font-bold text-slate-700 w-1/4">{{ b.codeBu }}</td>
+                              <td class="p-3 text-slate-600 w-1/4">{{ b.bu }}</td>
+                              <td class="p-3 font-mono text-blue-700 font-bold w-1/4">{{ b.codeDept }}</td>
+                              <td class="p-3 text-slate-600 w-1/4">{{ b.dept }}</td>
+                          </tr>
+                          <tr v-if="filteredBU.length === 0"><td colspan="4" class="p-4 text-center text-slate-400 italic">Aucune donnée trouvée.</td></tr>
+                      </tbody>
+                  </table>
+              </div>
+          </div>
+      </div>
+
+      <div class="xl:col-span-5 flex flex-col">
+          <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden shrink-0">
+              <h3 class="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 text-lg flex items-center shrink-0"><i class="fa-solid fa-id-card-alt text-blue-500 mr-3"></i> Base Codes Métiers</h3>
+              <p class="text-sm text-slate-600 mb-6 pl-2 shrink-0">Le référentiel des métiers (Positions) est défini de manière centralisée pour toute l'entreprise. <br> <br>Chaque métier est codifié, des exemples sont présents ci dessous.</p>
+              
+              <div class="mb-4 relative shrink-0">
+                  <input type="text" placeholder="Rechercher Code, Nom, Famille..." v-model="searchJob" class="w-full border border-slate-300 p-2.5 pl-10 rounded-xl text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all bg-slate-50" />
+                  <i class="fa-solid fa-search absolute left-4 top-3.5 text-slate-400"></i>
+              </div>
+              
+              <div class="border border-slate-200 rounded-xl overflow-y-auto overflow-x-auto bg-slate-50 shadow-inner p-2 max-h-[880px]">
+                  <div v-for="(c, i) in filteredCodes" :key="'job'+i" class="text-xs p-3 border-b border-slate-200 last:border-0 text-slate-700 flex justify-between items-center hover:bg-white transition-colors rounded-lg whitespace-nowrap min-w-[300px]">
+                      <span class="flex-1 pr-4 truncate"><strong class="text-blue-900">{{ c.code }}</strong> - {{ c.name }}</span> 
+                      <span class="text-slate-500 bg-slate-200/50 px-2 py-1 rounded font-medium whitespace-nowrap">{{ c.family }}</span>
+                  </div>
+                  <div v-if="filteredCodes.length === 0" class="text-xs text-slate-500 p-4 text-center italic">Aucun métier trouvé.</div>
+              </div>
+          </div>
+      </div>
+    </div>
+
+    <!-- mini jeu parti 2A -->
+    <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden mt-6">
+      <div class="absolute top-0 left-0 w-1.5 h-full bg-blue-500"></div>
+      <h3 class="font-bold text-slate-800 mb-2 pl-2 flex items-center text-lg">
+        <i class="fa-solid fa-dumbbell text-blue-500 mr-3"></i> Exercice d'application
+      </h3>
+      <p class="text-sm text-slate-600 mb-6 pl-2">Mettez en pratique la lecture des référentiels en préparant les données pour la création de deux nouvelles ressources.</p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pl-2">
+        <!-- Exercice 1 -->
+        <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 shadow-sm relative">
+          <span class="absolute -top-3 -left-3 w-8 h-8 bg-blue-100 text-blue-700 font-bold rounded-full flex items-center justify-center border-4 border-white shadow-sm">1</span>
+          <h4 class="font-bold text-sm text-slate-700 mb-4 ml-2">Créer un <strong>Ingénieur calcul</strong> au sein de <strong>INNOV-R&D</strong></h4>
+          
+          <label class="block text-xs font-bold text-slate-600 mb-1.5">Code Métier (Job Code)</label>
+          <input type="text" v-model="content.p2a_ex1Job" @input="content.p2a_exStatus = null" placeholder="Ex: H110" 
+                 :class="[
+                   'w-full p-2.5 border rounded-lg mb-4 text-sm outline-none uppercase transition-colors',
+                   (content.p2a_exStatus === 'success' || (content.p2a_exStatus === 'error' && (content.p2a_ex1Job || '').trim().toUpperCase() === 'H231')) ? 'border-emerald-500 bg-emerald-50 text-emerald-700 focus:border-emerald-500' :
+                   (content.p2a_exStatus === 'error' && (content.p2a_ex1Job || '').trim().toUpperCase() !== 'H231') ? 'border-red-500 bg-red-50 text-red-700 focus:border-red-500' :
+                   'border-slate-300 focus:border-blue-500 bg-white'
+                 ]"/>
+          
+          <label class="block text-xs font-bold text-slate-600 mb-1.5">Code Département (Cost Center)</label>
+          <input type="text" v-model="content.p2a_ex1Dept" @input="content.p2a_exStatus = null" placeholder="Ex: AT13003" 
+                 :class="[
+                   'w-full p-2.5 border rounded-lg text-sm outline-none uppercase transition-colors',
+                   (content.p2a_exStatus === 'success' || (content.p2a_exStatus === 'error' && (content.p2a_ex1Dept || '').trim().toUpperCase() === 'AT12070')) ? 'border-emerald-500 bg-emerald-50 text-emerald-700 focus:border-emerald-500' :
+                   (content.p2a_exStatus === 'error' && (content.p2a_ex1Dept || '').trim().toUpperCase() !== 'AT12070') ? 'border-red-500 bg-red-50 text-red-700 focus:border-red-500' :
+                   'border-slate-300 focus:border-blue-500 bg-white'
+                 ]"/>
+        </div>
+
+        <!-- Exercice 2 -->
+        <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 shadow-sm relative">
+          <span class="absolute -top-3 -left-3 w-8 h-8 bg-blue-100 text-blue-700 font-bold rounded-full flex items-center justify-center border-4 border-white shadow-sm">2</span>
+          <h4 class="font-bold text-sm text-slate-700 mb-4 ml-2">Créer un <strong>Soudeur</strong> au sein de <strong>SPAT - UAP Reservoirs</strong></h4>
+          
+          <label class="block text-xs font-bold text-slate-600 mb-1.5">Code Métier (Job Code)</label>
+          <input type="text" v-model="content.p2a_ex2Job" @input="content.p2a_exStatus = null" placeholder="Ex: H110" 
+                 :class="[
+                   'w-full p-2.5 border rounded-lg mb-4 text-sm outline-none uppercase transition-colors',
+                   (content.p2a_exStatus === 'success' || (content.p2a_exStatus === 'error' && (content.p2a_ex2Job || '').trim().toUpperCase() === 'H621')) ? 'border-emerald-500 bg-emerald-50 text-emerald-700 focus:border-emerald-500' :
+                   (content.p2a_exStatus === 'error' && (content.p2a_ex2Job || '').trim().toUpperCase() !== 'H621') ? 'border-red-500 bg-red-50 text-red-700 focus:border-red-500' :
+                   'border-slate-300 focus:border-blue-500 bg-white'
+                 ]"/>
+          
+          <label class="block text-xs font-bold text-slate-600 mb-1.5">Code Département (Cost Center)</label>
+          <input type="text" v-model="content.p2a_ex2Dept" @input="content.p2a_exStatus = null" placeholder="Ex: AT13003" 
+                 :class="[
+                   'w-full p-2.5 border rounded-lg text-sm outline-none uppercase transition-colors',
+                   (content.p2a_exStatus === 'success' || (content.p2a_exStatus === 'error' && (content.p2a_ex2Dept || '').trim().toUpperCase() === 'AT13053')) ? 'border-emerald-500 bg-emerald-50 text-emerald-700 focus:border-emerald-500' :
+                   (content.p2a_exStatus === 'error' && (content.p2a_ex2Dept || '').trim().toUpperCase() !== 'AT13053') ? 'border-red-500 bg-red-50 text-red-700 focus:border-red-500' :
+                   'border-slate-300 focus:border-blue-500 bg-white'
+                 ]"/>
+        </div>
+      </div>
+
+      <!-- Boutons et messages de validation -->
+      <div class="mt-8 flex flex-col sm:flex-row items-center justify-between pl-2 gap-4 border-t border-slate-100 pt-6">
+        <div class="flex-1 text-center sm:text-left min-h-[40px] flex items-center">
+          <span v-if="content.p2a_exStatus === 'error'" class="text-red-500 font-bold text-sm animate-pulse border border-red-200 bg-red-50 px-4 py-2 rounded-lg w-full md:w-auto text-left"><i class="fa-solid fa-times-circle mr-2"></i> Certaines saisies sont incorrectes. Vérifiez les champs en rouge.</span>
+          <span v-if="content.p2a_exStatus === 'success' || isDevMode" class="text-green-600 font-bold text-sm border border-green-200 bg-green-50 px-4 py-2 rounded-lg animate-fade-in w-full md:w-auto text-left"><i class="fa-solid fa-check-circle mr-2 text-lg"></i> Bravo, codes exacts !</span>
+        </div>
+        
+        <button v-if="content.p2a_exStatus !== 'success'" type="button" 
+                @click.prevent="content.p2a_exStatus = ((content.p2a_ex1Job || '').trim().toUpperCase() === 'H231' && (content.p2a_ex1Dept || '').trim().toUpperCase() === 'AT12070' && (content.p2a_ex2Job || '').trim().toUpperCase() === 'H621' && (content.p2a_ex2Dept || '').trim().toUpperCase() === 'AT13053') ? 'success' : 'error'; if(content.p2a_exStatus === 'success') saveTaskProgress('ex_p2_ref');"
+                class="btn-primary w-full sm:w-auto shadow-md py-3 px-8 text-base">
+          Vérifier mes saisies
+        </button>
+        
+        <button v-if="content.p2a_exStatus === 'success' || isDevMode" 
+                type="button" 
+                onclick="setTimeout(() => window.scrollTo({top: 0, behavior: 'smooth'}), 100)"
+                @click.prevent="content.p2Tab = 'B';" 
+                class="w-full sm:w-auto shadow-md py-3 px-8 text-base font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-all rounded-xl hover:-translate-y-0.5">
+          Passer à l'onglet B <i class="fa-solid fa-arrow-right ml-2"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="content.p2Tab === 'B'" class="space-y-6 animate-fade-in">
+
+    <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
+      <h3 class="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 text-xl flex items-center pl-2">
+        <i class="fa-solid fa-sitemap text-blue-500 mr-3"></i> 
+        <span v-if="!isEditMode">{{ content.pm_p2_tabB_type_title || "Types de Projets" }}</span>
+        <input v-else v-model="content.pm_p2_tabB_type_title" class="border p-1 w-full bg-yellow-50 text-sm font-normal">
+      </h3>
+      <p v-if="!isEditMode" class="text-sm text-slate-600 mb-6 pl-2">{{ content.pm_p2_tabB_type_desc || "Découvrez les différentes natures de projets gérés dans l'outil." }}</p>
+      <textarea v-else v-model="content.pm_p2_tabB_type_desc" class="border p-1 w-full bg-yellow-50 mb-6 text-sm" placeholder="Description..."></textarea>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-amber-50 border border-amber-200 p-5 rounded-xl shadow-sm relative">
+           <h4 class="font-bold text-amber-900 mb-2"><i class="fa-solid fa-chart-pie mr-2 text-amber-600"></i><span v-if="!isEditMode">{{ content.pm_p2_type_prev_title || "Prévision de Vente" }}</span><input v-else v-model="content.pm_p2_type_prev_title" class="border p-1 text-sm bg-yellow-50 w-full"></h4>
+           <p class="text-sm text-amber-800"><span v-if="!isEditMode">{{ content.pm_p2_type_prev_desc || "Projet commercial en phase d'acquisition (Prospectif, Chiffrage, Négociation)." }}</span><textarea v-else v-model="content.pm_p2_type_prev_desc" class="border p-1 text-xs bg-yellow-50 w-full mt-1"></textarea></p>
+         </div>
+         <div class="bg-blue-50 border border-blue-200 p-5 rounded-xl shadow-sm relative">
+           <h4 class="font-bold text-blue-900 mb-2"><i class="fa-solid fa-file-contract mr-2 text-blue-600"></i><span v-if="!isEditMode">{{ content.pm_p2_type_ext_title || "Projet Commercial" }}</span><input v-else v-model="content.pm_p2_type_ext_title" class="border p-1 text-sm bg-yellow-50 w-full"></h4>
+           <p class="text-sm text-blue-800"><span v-if="!isEditMode">{{ content.pm_p2_type_ext_desc || "Projet vendu à un client en cours d'exécution, générant du CA." }}</span><textarea v-else v-model="content.pm_p2_type_ext_desc" class="border p-1 text-xs bg-yellow-50 w-full mt-1"></textarea></p>
+         </div>
+         <div class="bg-purple-50 border border-purple-200 p-5 rounded-xl shadow-sm relative">
+           <h4 class="font-bold text-purple-900 mb-2"><i class="fa-solid fa-flask mr-2 text-purple-600"></i><span v-if="!isEditMode">{{ content.pm_p2_type_int_title || "Projet Interne" }}</span><input v-else v-model="content.pm_p2_type_int_title" class="border p-1 text-sm bg-yellow-50 w-full"></h4>
+           <p class="text-sm text-purple-800"><span v-if="!isEditMode">{{ content.pm_p2_type_int_desc || "Projets non vendu (R&D, Lean...) ne générant pas de CA direct." }}</span><textarea v-else v-model="content.pm_p2_type_int_desc" class="border p-1 text-xs bg-yellow-50 w-full mt-1"></textarea></p>
+         </div>
+      </div>
+    </div>
+
+    <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
+      <h3 class="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 text-xl flex items-center pl-2">
+        <i class="fa-solid fa-project-diagram text-blue-500 mr-3"></i> 
+        <span v-if="!isEditMode">{{ content.pm_p2_tabB_cycle_title || "Cycle de vie & Inclusion S&OP" }}</span>
+        <input v-else v-model="content.pm_p2_tabB_cycle_title" class="border p-1 w-full bg-yellow-50 text-sm font-normal">
+      </h3>
+      <p v-if="!isEditMode" class="text-sm text-slate-600 mb-6 pl-2">{{ content.pm_p2_tabB_cycle_desc || "Le parcours détaillé des statuts, leur impact sur la charge et le type de projet concerné." }}</p>
+      <textarea v-else v-model="content.pm_p2_tabB_cycle_desc" class="border p-1 w-full bg-yellow-50 mb-6 text-sm" placeholder="Description..."></textarea>
+
+      <div class="relative border-l-2 border-slate-300 ml-6 pb-4">
+        <div class="relative flex flex-col md:flex-row items-stretch gap-4 mb-8">
+            <div class="flex-1">
+                <div class="relative pl-8">
+                    <div class="absolute -left-[17px] top-4 w-8 h-8 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center border-4 border-white shadow-sm"><i class="fa-solid fa-pencil-alt text-xs"></i></div>
+                    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:border-slate-300 transition-colors">
+                        <h4 class="font-bold text-slate-800"><span v-if="!isEditMode">{{ content.pm_p2_st1_title || "1. Brouillon" }}</span><input v-else v-model="content.pm_p2_st1_title" class="border p-1 text-sm font-bold w-full bg-yellow-50"></h4>
+                        <p class="text-xs text-slate-500 mt-1"><span v-if="!isEditMode">{{ content.pm_p2_st1_desc || "Création initiale du projet. Les détails ne sont pas encore finalisés." }}</span><input v-else v-model="content.pm_p2_st1_desc" class="border p-1 text-xs w-full bg-yellow-50"></p>
+                        <div class="mt-3 flex gap-2 flex-wrap">
+                          <span class="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase shadow-sm border border-purple-200"><i class="fa-solid fa-flask mr-1"></i>Interne</span>
+                          <span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase shadow-sm border border-blue-200"><i class="fa-solid fa-file-contract mr-1"></i>Commercial</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="w-full md:w-56 shrink-0 pl-8 md:pl-0 flex">
+                <div class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-center shadow-sm flex flex-col justify-center items-center">
+                    <span class="text-sm font-bold text-slate-600">Charge ignorée</span>
+                    <i class="fa-solid fa-times-circle text-slate-300 text-2xl mt-2"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="relative flex flex-col md:flex-row items-stretch gap-4 mb-8">
+            <div class="flex-1 space-y-6">
+                <div class="relative pl-8">
+                    <div class="absolute -left-[17px] top-4 w-8 h-8 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center border-4 border-white shadow-sm"><i class="fa-solid fa-chart-line text-xs"></i></div>
+                    <div class="bg-white border border-amber-200 rounded-xl p-4 shadow-sm hover:border-amber-300 transition-colors">
+                        <h4 class="font-bold text-amber-900"><span v-if="!isEditMode">{{ content.pm_p2_st2_title || "2. Prospectif" }}</span><input v-else v-model="content.pm_p2_st2_title" class="border p-1 text-sm font-bold w-full bg-yellow-50"></h4>
+                        <p class="text-xs text-amber-700 mt-1"><span v-if="!isEditMode">{{ content.pm_p2_st2_desc || "En phase de proposition commerciale initiale." }}</span><input v-else v-model="content.pm_p2_st2_desc" class="border p-1 text-xs w-full bg-yellow-50"></p>
+                        <div class="mt-3 flex gap-2 flex-wrap">
+                          <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase shadow-sm border border-amber-200"><i class="fa-solid fa-chart-pie mr-1"></i>Prévision</span>
+                          <span class="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase shadow-sm border border-purple-200"><i class="fa-solid fa-flask mr-1"></i>Interne</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative pl-8">
+                    <div class="absolute -left-[17px] top-4 w-8 h-8 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center border-4 border-white shadow-sm"><i class="fa-solid fa-euro-sign text-xs"></i></div>
+                    <div class="bg-white border border-amber-200 rounded-xl p-4 shadow-sm hover:border-amber-300 transition-colors">
+                        <h4 class="font-bold text-amber-900"><span v-if="!isEditMode">{{ content.pm_p2_st2c_title || "3. Chiffrage" }}</span><input v-else v-model="content.pm_p2_st2c_title" class="border p-1 text-sm font-bold w-full bg-yellow-50"></h4>
+                        <p class="text-xs text-amber-700 mt-1"><span v-if="!isEditMode">{{ content.pm_p2_st2c_desc || "En phase de chiffrage, Feuille de Prix en cours." }}</span><input v-else v-model="content.pm_p2_st2c_desc" class="border p-1 text-xs w-full bg-yellow-50"></p>
+                        <div class="mt-3 flex gap-2 flex-wrap">
+                          <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase shadow-sm border border-amber-200"><i class="fa-solid fa-chart-pie mr-1"></i>Prévision</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative pl-8">
+                    <div class="absolute -left-[17px] top-4 w-8 h-8 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center border-4 border-white shadow-sm"><i class="fa-solid fa-handshake text-xs"></i></div>
+                    <div class="bg-white border border-amber-200 rounded-xl p-4 shadow-sm hover:border-amber-300 transition-colors">
+                        <h4 class="font-bold text-amber-900"><span v-if="!isEditMode">{{ content.pm_p2_st2b_title || "4. Négociation" }}</span><input v-else v-model="content.pm_p2_st2b_title" class="border p-1 text-sm font-bold w-full bg-yellow-50"></h4>
+                        <p class="text-xs text-amber-700 mt-1"><span v-if="!isEditMode">{{ content.pm_p2_st2b_desc || "Discussions tarifaires et contractuelles avancées avec le client." }}</span><input v-else v-model="content.pm_p2_st2b_desc" class="border p-1 text-xs w-full bg-yellow-50"></p>
+                        <div class="mt-3 flex gap-2 flex-wrap">
+                          <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase shadow-sm border border-amber-200"><i class="fa-solid fa-chart-pie mr-1"></i>Prévision</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="w-full md:w-56 shrink-0 pl-8 md:pl-0 flex">
+                <div class="w-full bg-amber-50 border border-amber-200 rounded-xl p-4 text-center shadow-sm flex flex-col justify-center items-center">
+                    <span class="text-sm font-bold text-amber-600">Charge considérée <br>(Décision du Head of Sales)</span>
+                    <i class="fa-solid fa-balance-scale text-amber-400 text-2xl mt-2"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="relative flex flex-col md:flex-row items-stretch gap-4 mb-8">
+            <div class="flex-1 space-y-6">
+                <div class="relative pl-8">
+                    <div class="absolute -left-[17px] top-4 w-8 h-8 bg-blue-100 text-blue-500 rounded-full flex items-center justify-center border-4 border-white shadow-sm"><i class="fa-solid fa-hourglass-half text-xs"></i></div>
+                    <div class="bg-white border border-blue-200 rounded-xl p-4 shadow-sm hover:border-blue-300 transition-colors">
+                        <h4 class="font-bold text-blue-900"><span v-if="!isEditMode">{{ content.pm_p2_st3_title || "5. Gagné - En attente d'affectation du chef de projet" }}</span><input v-else v-model="content.pm_p2_st3_title" class="border p-1 text-sm font-bold w-full bg-yellow-50"></h4>
+                        <p class="text-xs text-blue-700 mt-1"><span v-if="!isEditMode">{{ content.pm_p2_st3_desc || "Contrat signé ou budget alloué. En attente d'affectation d'un PM." }}</span><input v-else v-model="content.pm_p2_st3_desc" class="border p-1 text-xs w-full bg-yellow-50"></p>
+                        <div class="mt-3 flex gap-2 flex-wrap">
+                          <span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase shadow-sm border border-blue-200"><i class="fa-solid fa-file-contract mr-1"></i>Commercial</span>
+                          <span class="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase shadow-sm border border-purple-200"><i class="fa-solid fa-flask mr-1"></i>Interne</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative pl-8">
+                    <div class="absolute -left-[17px] top-4 w-8 h-8 bg-blue-100 text-blue-500 rounded-full flex items-center justify-center border-4 border-white shadow-sm"><i class="fa-solid fa-play text-xs"></i></div>
+                    <div class="bg-white border border-blue-200 rounded-xl p-4 shadow-sm hover:border-blue-300 transition-colors">
+                        <h4 class="font-bold text-blue-900"><span v-if="!isEditMode">{{ content.pm_p2_st4_title || "6. Gagné - Exécution du projet" }}</span><input v-else v-model="content.pm_p2_st4_title" class="border p-1 text-sm font-bold w-full bg-yellow-50"></h4>
+                        <p class="text-xs text-blue-700 mt-1"><span v-if="!isEditMode">{{ content.pm_p2_st4_desc || "Réalisation active du projet par l'équipe opérationnelle." }}</span><input v-else v-model="content.pm_p2_st4_desc" class="border p-1 text-xs w-full bg-yellow-50"></p>
+                        <div class="mt-3 flex gap-2 flex-wrap">
+                          <span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase shadow-sm border border-blue-200"><i class="fa-solid fa-file-contract mr-1"></i>Commercial</span>
+                          <span class="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase shadow-sm border border-purple-200"><i class="fa-solid fa-flask mr-1"></i>Interne</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="w-full md:w-56 shrink-0 pl-8 md:pl-0 flex">
+                <div class="w-full bg-blue-50 border border-blue-200 rounded-xl p-4 text-center shadow-sm flex flex-col justify-center items-center">
+                    <span class="text-sm font-bold text-blue-600">Charge considérée</span>
+                    <i class="fa-solid fa-check-circle text-blue-400 text-2xl mt-2"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="relative flex flex-col md:flex-row items-stretch gap-4">
+            <div class="flex-1 space-y-6">
+                <div class="relative pl-8">
+                    <div class="absolute -left-[17px] top-4 w-8 h-8 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center border-4 border-white shadow-sm"><i class="fa-solid fa-flag-checkered text-xs"></i></div>
+                    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:border-slate-300 transition-colors">
+                        <h4 class="font-bold text-slate-800"><span v-if="!isEditMode">{{ content.pm_p2_st5_title || "7a. Clôturé" }}</span><input v-else v-model="content.pm_p2_st5_title" class="border p-1 text-sm font-bold w-full bg-yellow-50"></h4>
+                        <p class="text-xs text-slate-500 mt-1"><span v-if="!isEditMode">{{ content.pm_p2_st5_desc || "Projet terminé et livré avec succès. Fin des activités." }}</span><input v-else v-model="content.pm_p2_st5_desc" class="border p-1 text-xs w-full bg-yellow-50"></p>
+                        <div class="mt-3 flex gap-2 flex-wrap">
+                          <span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase shadow-sm border border-blue-200"><i class="fa-solid fa-file-contract mr-1"></i>Commercial</span>
+                          <span class="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase shadow-sm border border-purple-200"><i class="fa-solid fa-flask mr-1"></i>Interne</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative pl-8">
+                    <div class="absolute -left-[17px] top-4 w-8 h-8 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center border-4 border-white shadow-sm"><i class="fa-solid fa-times text-xs"></i></div>
+                    <div class="bg-white border border-rose-200 rounded-xl p-4 shadow-sm hover:border-rose-300 transition-colors">
+                        <h4 class="font-bold text-rose-900"><span v-if="!isEditMode">{{ content.pm_p2_st6_title || "7b. Annulé" }}</span><input v-else v-model="content.pm_p2_st6_title" class="border p-1 text-sm font-bold w-full bg-yellow-50"></h4>
+                        <p class="text-xs text-rose-700 mt-1"><span v-if="!isEditMode">{{ content.pm_p2_st6_desc || "Projet arrêté prématurément (avant ou pendant l'exécution)." }}</span><input v-else v-model="content.pm_p2_st6_desc" class="border p-1 text-xs w-full bg-yellow-50"></p>
+                        <div class="mt-3 flex gap-2 flex-wrap">
+                          <span class="bg-slate-50 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded uppercase shadow-sm border border-slate-200"><i class="fa-solid fa-chart-pie mr-1"></i>Tout Types</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative pl-8">
+                    <div class="absolute -left-[17px] top-4 w-8 h-8 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center border-4 border-white shadow-sm"><i class="fa-solid fa-times text-xs"></i></div>
+                    <div class="bg-white border border-rose-200 rounded-xl p-4 shadow-sm hover:border-rose-300 transition-colors">
+                        <h4 class="font-bold text-rose-900"><span v-if="!isEditMode">{{ content.pm_p2_st7_title || "7c. Rejeté" }}</span><input v-else v-model="content.pm_p2_st6_title" class="border p-1 text-sm font-bold w-full bg-yellow-50"></h4>
+                        <p class="text-xs text-rose-700 mt-1"><span v-if="!isEditMode">{{ content.pm_p2_st7_desc || "Projet créé directement en phase d'exécution et refusé par le responsable PM." }}</span><input v-else v-model="content.pm_p2_st6_desc" class="border p-1 text-xs w-full bg-yellow-50"></p>
+                        <div class="mt-3 flex gap-2 flex-wrap">
+                          <span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase shadow-sm border border-blue-200"><i class="fa-solid fa-file-contract mr-1"></i>Commercial</span>
+                          <span class="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase shadow-sm border border-purple-200"><i class="fa-solid fa-flask mr-1"></i>Interne</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="w-full md:w-56 shrink-0 pl-8 md:pl-0 flex">
+                <div class="w-full bg-rose-50 border border-rose-200 rounded-xl p-4 text-center shadow-sm flex flex-col justify-center items-center">
+                    <span class="text-sm font-bold text-rose-600">Charge retirée</span>
+                    <i class="fa-solid fa-ban text-rose-400 text-2xl mt-2"></i>
+                </div>
+            </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mini-Jeu Onglet B -->
+    <div class="bg-white border border-indigo-200 rounded-2xl p-8 shadow-sm relative overflow-hidden">
+      <div class="absolute top-0 left-0 w-1.5 h-full bg-blue-500"></div>
+      <h3 class="font-bold text-slate-800 mb-2 pl-2 flex items-center text-lg">
+        <i class="fa-solid fa-gamepad text-blue-500 mr-3"></i> Mini-Jeu : Le Détecteur de Statuts
+      </h3>
+      <p class="text-sm text-slate-600 mb-6 pl-2">Lisez les 3 scénarios ci-dessous et déterminez le statut du projet ainsi que son impact sur la charge (S&OP).</p>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 pl-2">
+        <div class="bg-indigo-50/50 border border-indigo-100 p-5 rounded-xl flex flex-col justify-between">
+          <div>
+            <div class="w-8 h-8 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center font-bold mb-3 shadow-sm">1</div>
+            <p class="text-sm text-slate-700 mb-4">L'équipe projet<strong> vient d'ouvrir </strong> un projet en cours d'exécution dans l'application.</p>
+          </div>
+          <div class="space-y-3 mt-auto">
+            <div>
+              <label class="text-xs font-bold text-indigo-900 block mb-1">Quel est le statut ?</label>
+              <select v-model="content.p2b_g1_stat" @change="content.p2b_gameStatus = null" 
+                      :class="[
+                        'w-full p-2 text-xs border rounded-lg outline-none transition-colors',
+                        (content.p2b_gameStatus === 'success' || (content.p2b_gameStatus === 'error' && content.p2b_g1_stat === 'draft')) ? 'border-emerald-500 text-emerald-700 bg-emerald-50 focus:border-emerald-500' :
+                        (content.p2b_gameStatus === 'error' && content.p2b_g1_stat !== 'draft') ? 'border-red-500 text-red-700 bg-red-50 focus:border-red-500' :
+                        'border-indigo-200 focus:border-indigo-500 bg-white'
+                      ]">
+                <option value="">-- Choisir --</option>
+                <option value="draft">1. Brouillon</option>
+                <option value="forecast">2. Prospection/Devis</option>
+                <option value="execution">6. Gagné - Exécution du projet</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs font-bold text-indigo-900 block mb-1">Prise en compte charge :</label>
+              <select v-model="content.p2b_g1_wl" @change="content.p2b_gameStatus = null" 
+                      :class="[
+                        'w-full p-2 text-xs border rounded-lg outline-none transition-colors',
+                        (content.p2b_gameStatus === 'success' || (content.p2b_gameStatus === 'error' && content.p2b_g1_wl === 'ignoree')) ? 'border-emerald-500 text-emerald-700 bg-emerald-50 focus:border-emerald-500' :
+                        (content.p2b_gameStatus === 'error' && content.p2b_g1_wl !== 'ignoree') ? 'border-red-500 text-red-700 bg-red-50 focus:border-red-500' :
+                        'border-indigo-200 focus:border-indigo-500 bg-white'
+                      ]">
+                <option value="">-- Choisir --</option>
+                <option value="ignoree">Ignorée</option>
+                <option value="estimee">Considérée (Avec scénario)</option>
+                <option value="ferme">Considérée</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-indigo-50/50 border border-indigo-100 p-5 rounded-xl flex flex-col justify-between">
+          <div>
+            <div class="w-8 h-8 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center font-bold mb-3 shadow-sm">2</div>
+            <p class="text-sm text-slate-700 mb-4">Le proposal manager est en train de rédiger la Feuille de Prix pour un projet en phase acquisition, il remet son plan de charge à jour.</p>
+          </div>
+          <div class="space-y-3 mt-auto">
+            <div>
+              <label class="text-xs font-bold text-indigo-900 block mb-1">Quel est le statut ?</label>
+              <select v-model="content.p2b_g2_stat" @change="content.p2b_gameStatus = null" 
+                      :class="[
+                        'w-full p-2 text-xs border rounded-lg outline-none transition-colors',
+                        (content.p2b_gameStatus === 'success' || (content.p2b_gameStatus === 'error' && content.p2b_g2_stat === 'forecast')) ? 'border-emerald-500 text-emerald-700 bg-emerald-50 focus:border-emerald-500' :
+                        (content.p2b_gameStatus === 'error' && content.p2b_g2_stat !== 'forecast') ? 'border-red-500 text-red-700 bg-red-50 focus:border-red-500' :
+                        'border-indigo-200 focus:border-indigo-500 bg-white'
+                      ]">
+                <option value="">-- Choisir --</option>
+                <option value="draft">1. Brouillon</option>
+                <option value="forecast">3. Chiffrage</option>
+                <option value="closed">7a. Clôturé</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs font-bold text-indigo-900 block mb-1">Prise en compte charge :</label>
+              <select v-model="content.p2b_g2_wl" @change="content.p2b_gameStatus = null" 
+                      :class="[
+                        'w-full p-2 text-xs border rounded-lg outline-none transition-colors',
+                        (content.p2b_gameStatus === 'success' || (content.p2b_gameStatus === 'error' && content.p2b_g2_wl === 'estimee')) ? 'border-emerald-500 text-emerald-700 bg-emerald-50 focus:border-emerald-500' :
+                        (content.p2b_gameStatus === 'error' && content.p2b_g2_wl !== 'estimee') ? 'border-red-500 text-red-700 bg-red-50 focus:border-red-500' :
+                        'border-indigo-200 focus:border-indigo-500 bg-white'
+                      ]">
+                <option value="">-- Choisir --</option>
+                <option value="ignoree">Ignorée</option>
+                <option value="estimee">Considérée (Avec scénario)</option>
+                <option value="ferme">Considérée</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-indigo-50/50 border border-indigo-100 p-5 rounded-xl flex flex-col justify-between">
+          <div>
+            <div class="w-8 h-8 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center font-bold mb-3 shadow-sm">3</div>
+            <p class="text-sm text-slate-700 mb-4"><strong>Le client a signé !</strong> Le contrat est validé, mais le Directeur doit encore désigner qui sera le Chef de Projet.</p>
+          </div>
+          <div class="space-y-3 mt-auto">
+            <div>
+              <label class="text-xs font-bold text-indigo-900 block mb-1">Quel est le statut ?</label>
+              <select v-model="content.p2b_g3_stat" @change="content.p2b_gameStatus = null" 
+                      :class="[
+                        'w-full p-2 text-xs border rounded-lg outline-none transition-colors',
+                        (content.p2b_gameStatus === 'success' || (content.p2b_gameStatus === 'error' && content.p2b_g3_stat === 'pending')) ? 'border-emerald-500 text-emerald-700 bg-emerald-50 focus:border-emerald-500' :
+                        (content.p2b_gameStatus === 'error' && content.p2b_g3_stat !== 'pending') ? 'border-red-500 text-red-700 bg-red-50 focus:border-red-500' :
+                        'border-indigo-200 focus:border-indigo-500 bg-white'
+                      ]">
+                <option value="">-- Choisir --</option>
+                <option value="nego">4. Négociation</option>
+                <option value="pending">5. Gagné - En attente d'affectation du chef de projet</option>
+                <option value="cancelled">7b. Annulé</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs font-bold text-indigo-900 block mb-1">Prise en compte charge :</label>
+              <select v-model="content.p2b_g3_wl" @change="content.p2b_gameStatus = null" 
+                      :class="[
+                        'w-full p-2 text-xs border rounded-lg outline-none transition-colors',
+                        (content.p2b_gameStatus === 'success' || (content.p2b_gameStatus === 'error' && content.p2b_g3_wl === 'ferme')) ? 'border-emerald-500 text-emerald-700 bg-emerald-50 focus:border-emerald-500' :
+                        (content.p2b_gameStatus === 'error' && content.p2b_g3_wl !== 'ferme') ? 'border-red-500 text-red-700 bg-red-50 focus:border-red-500' :
+                        'border-indigo-200 focus:border-indigo-500 bg-white'
+                      ]">
+                <option value="">-- Choisir --</option>
+                <option value="ignoree">Ignorée</option>
+                <option value="estimee">Considérée (Avec scénario)</option>
+                <option value="ferme">Considérée</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="mt-8 flex flex-col sm:flex-row items-center justify-between pl-2 gap-4 border-t border-slate-100 pt-6">
+        <div class="flex-1 text-center sm:text-left min-h-[40px] flex items-center">
+          <span v-if="content.p2b_gameStatus === 'error'" class="text-red-500 font-bold text-sm animate-pulse border border-red-200 bg-red-50 px-4 py-2 rounded-lg w-full md:w-auto text-left"><i class="fa-solid fa-times-circle mr-2"></i> Il y a des erreurs. Relisez bien les définitions des statuts et vérifiez les champs en rouge !</span>
+          <span v-if="content.p2b_gameStatus === 'success' || isDevMode" class="text-green-600 font-bold text-sm border border-green-200 bg-green-50 px-4 py-2 rounded-lg animate-fade-in w-full md:w-auto text-left"><i class="fa-solid fa-check-circle mr-2 text-lg"></i> Parfait ! Vous maîtrisez le cycle de vie des projets.</span>
+        </div>
+        <button type="button" 
+                @click.prevent="content.p2b_gameStatus = (content.p2b_g1_stat === 'draft' && content.p2b_g1_wl === 'ignoree' && content.p2b_g2_stat === 'forecast' && content.p2b_g2_wl === 'estimee' && content.p2b_g3_stat === 'pending' && content.p2b_g3_wl === 'ferme') ? 'success' : 'error'; if(content.p2b_gameStatus === 'success') saveTaskProgress('ex_p2_algo');"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md py-3 px-8 text-base font-bold transition-all w-full sm:w-auto">
+          Vérifier mes réponses
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-auto pt-6 flex flex-col md:flex-row justify-end items-end md:items-center gap-4 shrink-0">
+    <span v-if="!(content.p2a_exStatus === 'success' && content.p2b_gameStatus === 'success') && !isDevMode" class="text-sm text-slate-500 font-medium italic">
+        <i class="fa-solid fa-lock mr-1"></i> Réussissez les 2 exercices (Onglet A et B) pour continuer
+    </span>
+    
+    <!-- Bouton propre sans condition "if()" illégale dans Vue.js -->
+    <button type="button" 
+        onclick="setTimeout(() => window.scrollTo({top: 0, behavior: 'smooth'}), 100)"
+        @click.prevent="validateCurrentPart()" 
+        :disabled="!((content.p2a_exStatus === 'success' && content.p2b_gameStatus === 'success') || isDevMode)"
+        :class="['shadow-md py-3 px-8 text-base font-bold transition-all rounded-xl', ((content.p2a_exStatus === 'success' && content.p2b_gameStatus === 'success') || isDevMode) ? 'btn-primary hover:-translate-y-0.5' : 'bg-slate-200 text-slate-400 cursor-not-allowed']">
+      Passer à la Partie 3 <i class="fa-solid fa-arrow-right ml-2"></i>
+    </button>
+  </div>
+
+</div>
+<!-- ========================================= -->
+<!-- PARTIE 3 : ÉTAPES ET MANIPULATIONS        -->
+<!-- ========================================= -->
+<div v-if="currentPartNumber === 3 || currentTab === 'p3' || currentTab === 'part3'" class="space-y-6 animate-fade-in pb-10 flex flex-col min-h-[calc(100vh-100px)]">
+  
+  <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
+     <div class="absolute top-0 left-0 w-1.5 h-full bg-emerald-600"></div>
+    <h2 class="text-2xl font-bold text-slate-800 mb-2 flex items-center">
+      <i class="fa-solid fa-project-diagram text-blue-500 mr-3"></i> 
+      <span v-if="!isEditMode">{{ content.pm_p3_title || 'Partie 3 : Les Étapes dans OPTIMA' }}</span>
+      <input v-else v-model="content.pm_p3_title" class="border p-1 w-full bg-yellow-50 text-xl font-bold">
+    </h2>
+    <div v-if="!isEditMode" class="text-slate-700 text-[15px] leading-relaxed pl-2 cms-content" v-html="content.pm_p3_desc || '<p>Dans OPTIMA, l\'appel de charge se fait via des modèles de plans de charge pré-paramétrés dans Google Sheet.<br><strong>Votre rôle principal dans l\'application est de générer les appels de charge et de les maintenir à jour tout au long de la vie de vos projets.</strong></p>'"></div>
+     <div v-else class="pl-2"><html-editor v-model="content.pm_p3_desc" class="min-h-[100px]" placeholder="Texte d'introduction..."></html-editor></div>
+  </div>
+
+  <!-- Diagramme Logique "Blue Print" -->
+  <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
+    <div class="absolute top-0 left-0 w-1.5 h-full bg-blue-500"></div>
+    <h3 class="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-6 text-xl flex items-center pl-2">
+      <i class="fa-solid fa-code-branch text-blue-500 mr-3"></i> 
+      <span v-if="!isEditMode">{{ content.pm_p3_diagram_title || 'Diagramme du Cycle de Vie' }}</span>
+      <input v-else v-model="content.pm_p3_diagram_title" class="border p-1 w-full bg-yellow-50 text-sm font-normal" placeholder="Titre du diagramme">
+    </h3>
+
+    <!-- Flowchart Visuel (Dot Grid Background) -->
+    <div class="overflow-x-auto p-8 rounded-xl border border-slate-300 bg-slate-50" style="background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 20px 20px;">
+        <div class="min-w-[900px] flex flex-col items-center">
+            
+            <!-- Top Row (Flux Commercial vs Flux Interne) -->
+            <div class="flex w-full gap-12 justify-center items-start">
+                
+                <!-- Flux Acquisition -->
+                <div class="flex flex-col items-center relative w-64 bg-white/80 backdrop-blur-sm p-6 rounded-2xl border-2 border-dashed border-amber-400 shadow-sm pt-8">
+                    <span class="absolute -top-3 bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1.5 rounded-lg border border-amber-300 shadow-sm"><i class="fa-solid fa-handshake mr-1.5"></i> Phase Acquisition</span>
+                    
+                    <button type="button" @click.prevent="clickP3Step('A1')" :class="getP3BtnClass('A1', 'sales')">
+                        <i v-if="p3ClickedSteps.includes('A1') || p3ClickedSteps.includes('F1') || p3ClickedSteps.includes('E1bis')" class="fa-solid fa-check-circle text-green-500 absolute -top-2 -right-2 text-xl bg-white rounded-full shadow-sm animate-fade-in"></i>
+                        <i class="fa-solid fa-file-invoice text-amber-500 text-xl mb-2"></i>
+                        <span class="block text-center font-semibold leading-tight">{{ content.pm_p3_step_a1 || p3StepsData['A1'] }}</span>
+                    </button>
+                    <div class="w-0.5 h-6 bg-slate-400 mx-auto"></div>
+                    
+                    <button type="button" @click.prevent="clickP3Step('A2')" :class="getP3BtnClass('A2', 'sales')">
+                        <i v-if="p3ClickedSteps.includes('A2')" class="fa-solid fa-check-circle text-green-500 absolute -top-2 -right-2 text-xl bg-white rounded-full shadow-sm animate-fade-in"></i>
+                        <i class="fa-solid fa-exchange-alt text-amber-500 text-xl mb-2"></i>
+                        <span class="block text-center font-semibold leading-tight">{{ content.pm_p3_step_a2 || p3StepsData['A2'] }}</span>
+                    </button>
+                    <div class="w-0.5 h-6 bg-slate-400 mx-auto"></div>
+                    
+                    <button type="button" @click.prevent="clickP3Step('A3')" :class="getP3BtnClass('A3', 'sales')">
+                        <i v-if="p3ClickedSteps.includes('A3')" class="fa-solid fa-check-circle text-green-500 absolute -top-2 -right-2 text-xl bg-white rounded-full shadow-sm animate-fade-in"></i>
+                        <i class="fa-solid fa-chart-line text-amber-500 text-xl mb-2"></i>
+                        <span class="block text-center font-semibold leading-tight">{{ content.pm_p3_step_a3 || p3StepsData['A3'] }}</span>
+                    </button>
+                    <div class="w-0.5 h-6 bg-slate-400 mx-auto"></div>
+                    
+                    <button type="button" @click.prevent="clickP3Step('A4')" :class="getP3BtnClass('A4', 'sales')">
+                        <i v-if="p3ClickedSteps.includes('A4') || p3ClickedSteps.includes('F3') || p3ClickedSteps.includes('E3')" class="fa-solid fa-check-circle text-green-500 absolute -top-2 -right-2 text-xl bg-white rounded-full shadow-sm animate-fade-in"></i>
+                        <i class="fa-solid fa-tasks text-amber-500 text-xl mb-2"></i>
+                        <span class="block text-center font-semibold leading-tight">{{ content.pm_p3_step_a4 || p3StepsData['A4'] }}</span>
+                    </button>
+                    <div class="w-0.5 h-6 bg-slate-400 mx-auto"></div>
+                    
+                    <button type="button" @click.prevent="clickP3Step('A5')" :class="getP3BtnClass('A5', 'won')">
+                        <i v-if="p3ClickedSteps.includes('A5')" class="fa-solid fa-check-circle text-green-500 absolute -top-2 -right-2 text-xl bg-white rounded-full shadow-sm animate-fade-in"></i>
+                        <i class="fa-solid fa-trophy text-amber-500 text-2xl mb-2"></i>
+                        <span class="block text-center font-extrabold leading-tight">{{ content.pm_p3_step_a5 || p3StepsData['A5'] }}</span>
+                    </button>
+                    
+                </div>
+
+                <!-- Flux Interne -->
+                <div class="flex flex-col items-center relative w-96 bg-white/80 backdrop-blur-sm p-6 rounded-2xl border-2 border-dashed border-purple-400 shadow-sm pt-8">
+                    <span class="absolute -top-3 bg-purple-100 text-purple-800 text-xs font-bold px-3 py-1.5 rounded-lg border border-purple-300 shadow-sm"><i class="fa-solid fa-bolt mr-1.5"></i> Phase Acquisition Interne</span>
+                    
+                    <div class="w-full flex justify-center">
+                        <button type="button" @click.prevent="clickP3Step('F1')" :class="getP3BtnClass('F1', 'internal')" class="w-64">
+                            <i v-if="p3ClickedSteps.includes('A1') || p3ClickedSteps.includes('F1') || p3ClickedSteps.includes('E1bis')" class="fa-solid fa-check-circle text-green-500 absolute -top-2 -right-2 text-xl bg-white rounded-full shadow-sm animate-fade-in"></i>
+                            <i class="fa-solid fa-folder-plus text-purple-600 text-xl mb-2"></i>
+                            <span class="block text-center font-semibold leading-tight">{{ content.pm_p3_step_f1 || p3StepsData['F1'] }}</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Lignes de séparation -->
+                    <div class="w-full h-8 relative mt-2">
+                        <div class="absolute -top-2 left-1/2 w-0.5 h-6 bg-slate-400 -translate-x-1/2"></div>
+                        <div class="absolute top-4 left-1/4 right-1/4 h-0.5 bg-slate-400"></div>
+                        <div class="absolute top-4 left-1/4 w-0.5 h-4 bg-slate-400"></div>
+                        <div class="absolute top-4 right-1/4 w-0.5 h-4 bg-slate-400"></div>
+                    </div>
+                    
+                    <div class="flex w-full gap-4">
+                        <button type="button" @click.prevent="clickP3Step('F2')" :class="getP3BtnClass('F2', 'internal')" class="flex-1">
+                            <i v-if="p3ClickedSteps.includes('F2')" class="fa-solid fa-check-circle text-green-500 absolute -top-2 -right-2 text-xl bg-white rounded-full shadow-sm animate-fade-in"></i>
+                            <i class="fa-solid fa-check-double text-purple-600 text-xl mb-2"></i>
+                            <span class="block text-center font-semibold leading-tight">{{ content.pm_p3_step_f2 || p3StepsData['F2'] }}</span>
+                        </button>
+                        
+                        <button type="button" @click.prevent="clickP3Step('F')" :class="getP3BtnClass('F', 'reject')" class="flex-1">
+                            <i v-if="p3ClickedSteps.includes('F')" class="fa-solid fa-check-circle text-green-500 absolute -top-2 -right-2 text-xl bg-white rounded-full shadow-sm animate-fade-in"></i>
+                            <i class="fa-solid fa-times-circle text-red-500 text-xl mb-2"></i>
+                            <span class="block text-center font-semibold leading-tight">{{ content.pm_p3_step_n || p3StepsData['F'] }}</span>
+                        </button>
+                    </div>
+                    
+                    <div class="w-0.5 h-6 bg-slate-400 mr-auto ml-1/4 relative left-[25%]"></div>
+                    
+                    <div class="w-full flex justify-start">
+                        <button type="button" @click.prevent="clickP3Step('F3')" :class="getP3BtnClass('F3', 'internal')" class="w-[calc(50%-0.5rem)]">
+                            <i v-if="p3ClickedSteps.includes('A4') || p3ClickedSteps.includes('F3') || p3ClickedSteps.includes('E3')" class="fa-solid fa-check-circle text-green-500 absolute -top-2 -right-2 text-xl bg-white rounded-full shadow-sm animate-fade-in"></i>
+                            <i class="fa-solid fa-tasks text-purple-600 text-xl mb-2"></i>
+                            <span class="block text-center font-semibold leading-tight">{{ content.pm_p3_step_f3 || p3StepsData['F3'] }}</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Convergence: Arrow Down -->
+            <div class="h-12 relative w-full flex justify-center mt-4">
+                <div class="absolute top-0 left-[calc(50%-10rem)] w-0.5 h-8 bg-blue-400"></div>
+                <div class="absolute top-0 right-[calc(50%-10rem)] w-0.5 h-8 bg-purple-400"></div>
+                
+                <div class="absolute top-8 left-[calc(50%-10rem)] right-[calc(50%-10rem)] h-0.5 bg-gradient-to-r from-blue-400 to-purple-400"></div>
+                
+                <div class="absolute top-8 left-1/2 w-0.5 h-4 bg-purple-500 -translate-x-1/2"></div>
+                <div class="absolute top-[2.5rem] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-purple-500"></div>
+            </div>
+            
+            <!-- Exécution Row -->
+           <div class="flex flex-col items-center relative w-full md:w-[750px] bg-white/80 backdrop-blur-sm p-6 rounded-2xl border-2 border-dashed border-blue-400 shadow-sm mt-2 pt-8">
+                <span class="absolute -top-3 bg-blue-100 text-blue-900 text-xs font-bold px-4 py-1.5 rounded-lg border border-blue-300 shadow-sm">
+                    <i class="fa-solid fa-cogs mr-1.5"></i> Phase Exécution
+                </span>
+                
+                <div class="flex w-full z-10 items-stretch">
+                    
+                    <div class="w-1/2 px-3 flex flex-col items-center relative">
+                        <div class="w-full flex flex-col items-center grow pt-8 pb-0 relative">
+                          <span class="absolute top-0 -translate-y-1/2 bg-gradient-to-r from-amber-100 to-purple-100 text-slate-700 text-[10px] font-bold px-3 py-1 rounded-full border border-blue-200 whitespace-nowrap shadow-sm">
+                            <i class="fa-solid fa-info-circle mr-1 text-blue-600"></i> Cas : Suite phase acquisition
+                          </span>
+                            <button type="button" @click.prevent="clickP3Step('E1')" :class="getP3BtnClass('E1', 'execution')" class="w-[95%] bg-emerald-50 shadow-sm z-10 shrink-0">
+                                <i v-if="p3ClickedSteps.includes('E1')" class="fa-solid fa-check-circle text-green-500 absolute -top-2 -right-2 text-xl bg-white rounded-full shadow-sm animate-fade-in"></i>
+                                <i class="fa-solid fa-user-plus text-blue-500 text-xl mb-2"></i>
+                                <span class="block text-center font-semibold leading-tight">{{ content.pm_p3_step_e1 || p3StepsData['E1'] }}</span>
+                            </button>
+                            
+                            <div class="w-0.5 grow bg-slate-400 z-0 min-h-[1rem]"></div> 
+                            
+                            <button type="button" @click.prevent="clickP3Step('E2')" :class="getP3BtnClass('E2', 'execution')" class="w-[95%] z-10 bg-emerald-50  shadow-sm shrink-0 my-1">
+                                <i v-if="p3ClickedSteps.includes('E2')" class="fa-solid fa-check-circle text-green-500 absolute -top-2 -right-2 text-xl bg-white rounded-full shadow-sm animate-fade-in"></i>
+                                <i class="fa-solid fa-edit text-blue-500 text-xl mb-2"></i>
+                                <span class="block text-center font-semibold leading-tight">{{ content.pm_p3_step_e1 || p3StepsData['E2'] }}</span>
+                            </button>
+                            
+                            <div class="w-0.5 grow bg-slate-400 z-0 min-h-[1rem]"></div> 
+                        </div>
+                        
+                        <div class="w-0.5 h-2 bg-slate-400 z-0 shrink-0"></div>
+                    </div>
+                    
+                    <div class="w-1/2 px-3 flex flex-col items-center relative z-10">
+                        <div class="w-full bg-slate-50/50 border border-dashed border-slate-300 rounded-xl p-3 relative pt-8 pb-0 shadow-sm flex flex-col items-center grow">
+                            <span class="absolute top-0 -translate-y-1/2 bg-slate-100 text-slate-500 text-[10px] font-bold px-3 py-1 rounded-full border border-slate-200 whitespace-nowrap shadow-sm">
+                                <i class="fa-solid fa-info-circle mr-1"></i> Cas : Projet déjà en cours
+                            </span>
+                            
+                            <div class="w-full flex justify-center">
+                        <button type="button" @click.prevent="clickP3Step('E1bis')" :class="getP3BtnClass('E1bis', 'internal')" class="w-64">
+                            <i v-if="p3ClickedSteps.includes('A1') || p3ClickedSteps.includes('F1') || p3ClickedSteps.includes('E1bis')" class="fa-solid fa-check-circle text-green-500 absolute -top-2 -right-2 text-xl bg-white rounded-full shadow-sm animate-fade-in"></i>
+                            <i class="fa-solid fa-folder-plus text-blue-600 text-xl mb-2"></i>
+                            <span class="block text-center font-semibold leading-tight">{{ content.pm_p3_step_e1bis || p3StepsData['E1bis'] }}</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Lignes de séparation -->
+                    <div class="w-full h-8 relative mt-2">
+                        <div class="absolute -top-2 left-1/2 w-0.5 h-6 bg-slate-400 -translate-x-1/2"></div>
+                        <div class="absolute top-4 left-1/4 right-1/4 h-0.5 bg-slate-400"></div>
+                        <div class="absolute top-4 left-1/4 w-0.5 h-4 bg-slate-400"></div>
+                        <div class="absolute top-4 right-1/4 w-0.5 h-4 bg-slate-400"></div>
+                    </div>
+                    
+                    <div class="flex w-full gap-4">
+                        <button type="button" @click.prevent="clickP3Step('F2')" :class="getP3BtnClass('F2', 'internal')" class="flex-1">
+                            <i v-if="p3ClickedSteps.includes('F2')" class="fa-solid fa-check-circle text-green-500 absolute -top-2 -right-2 text-xl bg-white rounded-full shadow-sm animate-fade-in"></i>
+                            <i class="fa-solid fa-check-double text-blue-600 text-xl mb-2"></i>
+                            <span class="block text-center font-semibold leading-tight">{{ content.pm_p3_step_f2 || p3StepsData['F2'] }}</span>
+                        </button>
+                        
+                        <button type="button" @click.prevent="clickP3Step('F')" :class="getP3BtnClass('F', 'reject')" class="flex-1">
+                            <i v-if="p3ClickedSteps.includes('F')" class="fa-solid fa-check-circle text-green-500 absolute -top-2 -right-2 text-xl bg-white rounded-full shadow-sm animate-fade-in"></i>
+                            <i class="fa-solid fa-times-circle text-red-500 text-xl mb-2"></i>
+                            <span class="block text-center font-semibold leading-tight">{{ content.pm_p3_step_n || p3StepsData['F'] }}</span>
+                        </button>
+                    </div>
+                    
+                    <div class="w-0.5 h-6 bg-slate-400 mr-auto ml-1/4 relative left-[25%]"></div>
+                    
+                    <div class="w-full flex justify-start">
+                        <button type="button" @click.prevent="clickP3Step('E3')" :class="getP3BtnClass('E3', 'execution')" class="w-[calc(50%-0.5rem)]">
+                            <i v-if="p3ClickedSteps.includes('A4') || p3ClickedSteps.includes('F3') || p3ClickedSteps.includes('E3')" class="fa-solid fa-check-circle text-green-500 absolute -top-2 -right-2 text-xl bg-white rounded-full shadow-sm animate-fade-in"></i>
+                            <i class="fa-solid fa-tasks text-blue-600 text-xl mb-2"></i>
+                            <span class="block text-center font-semibold leading-tight">{{ content.pm_p3_step_e3 || p3StepsData['E3'] }}</span>
+                        </button>
+                    </div>
+                            
+                        
+                        </div>
+                        
+                        <div class="w-0.5 h-3 bg-slate-400 z-0 shrink-0"></div> 
+                    </div>
+                </div>
+                
+                <div class="w-full h-6 relative mt-0 z-0">
+                    <div class="absolute top-0 w-0.5 h-3 bg-slate-400 -translate-x-1/2" style="left: 25%;"></div>
+                    <div class="absolute top-0 w-0.5 h-3 bg-slate-400 -translate-x-1/2" style="left: 75%;"></div>
+                    <div class="absolute top-3 h-0.5 bg-slate-400" style="left: 25%; right: 25%;"></div>
+                    <div class="absolute top-3 left-1/2 w-0.5 h-3 bg-slate-400 -translate-x-1/2"></div>
+                </div>
+
+                <div class="z-10 bg-white rounded-xl">
+                    <button type="button" @click.prevent="clickP3Step('E4')" :class="getP3BtnClass('E4', 'ongoing')" class="w-64 relative group">
+                        <i v-if="p3ClickedSteps.includes('E4')" class="fa-solid fa-check-circle text-green-500 absolute -top-2 -right-2 text-xl bg-white rounded-full shadow-sm animate-fade-in z-10"></i>
+                        <div class="relative mb-2 flex items-center justify-center">
+                            <i class="fa-solid fa-sync-alt text-blue-600 text-2xl group-hover:rotate-180 transition-transform duration-500 ease-in-out"></i>
+                        </div>
+                        <span class="block text-center font-bold leading-tight">{{ content.pm_p3_step_e4 || p3StepsData['E4'] || 'Renouveler / Mettre à jour P3' }}</span>
+                    </button>
+                </div>
+
+                <div class="w-full h-6 relative mt-1 z-0">
+                    <div class="absolute top-0 left-1/2 w-0.5 h-6 bg-slate-400 -translate-x-1/2"></div>
+                </div>
+                
+                <div class="z-10 bg-white rounded-xl">
+                    <button type="button" @click.prevent="clickP3Step('E5')" :class="getP3BtnClass('E5', 'end')" class="w-64">
+                        <i v-if="p3ClickedSteps.includes('E5')" class="fa-solid fa-check-circle text-green-500 absolute -top-2 -right-2 text-xl bg-white rounded-full shadow-sm animate-fade-in"></i>
+                        <i class="fa-solid fa-flag-checkered text-slate-600 text-xl mb-2"></i>
+                        <span class="block text-center font-semibold leading-tight">{{ content.pm_p3_step_e5 || p3StepsData['E5'] || 'Clôturer / Annuler le projet' }}</span>
+                    </button>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    
+    <!-- DETAILS PANEL -->
+    <div v-if="p3SelectedStep" id="p3-details-panel" class="mt-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 animate-fade-in">
+       <h4 class="text-xl font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2"><i class="fa-solid fa-info-circle text-blue-500 mr-2"></i> Explications : {{ getP3StepTitle(p3SelectedStep) }}</h4>
+       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+              <!-- Rôles autorisés -->
+              <div class="mb-5 bg-blue-50 p-4 rounded-xl border border-blue-100 shadow-sm">
+                  <h5 class="text-xs font-bold text-blue-800 uppercase mb-2 flex items-center"><i class="fa-solid fa-user-check mr-2"></i> Rôles autorisés</h5>
+                  <div v-if="!isEditMode" class="text-sm text-blue-900 font-semibold" v-html="content['pm_p3_roles_' + p3SelectedStep.toLowerCase()] || 'Non défini (cliquez sur Mode Édition pour compléter).'"></div>
+                  <input v-else v-model="content['pm_p3_roles_' + p3SelectedStep.toLowerCase()]" placeholder="Ex: Head of Sales, Proposal Manager..." class="w-full p-2 border border-blue-300 rounded-lg text-sm bg-white text-slate-800 outline-none focus:border-blue-500">
+              </div>
+              
+              <!-- Description HTML -->
+              <div v-if="!isEditMode" class="cms-content text-sm text-slate-700 leading-relaxed" v-html="content['pm_p3_desc_' + p3SelectedStep.toLowerCase()] || '<p>Cliquez sur \'Mode Édition\' en haut à droite pour ajouter une description explicative et/ou des vidéos tutoriels pour cette étape.</p>'"></div>
+              <html-editor v-else v-model="content['pm_p3_desc_' + p3SelectedStep.toLowerCase()]" placeholder="Description de l'étape..."></html-editor>
+          </div>
+          <div class="flex flex-col gap-4">
+              <!-- Visualiseur de vidéo dynamique -->
+              <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 shadow-inner">
+                  <div class="relative w-full aspect-video bg-slate-900 rounded-xl overflow-hidden shadow-lg border border-slate-800 flex flex-col justify-center items-center">
+                    <iframe v-if="currentP3VideoUrl" :src="currentP3VideoUrl" class="w-full h-full border-0 absolute top-0 left-0" allowfullscreen></iframe>
+                    <div v-else class="text-slate-500 flex flex-col items-center p-6 text-center">
+                      <i class="fa-solid fa-video-slash text-3xl mb-3 opacity-50"></i>
+                      <span class="text-sm font-bold text-slate-400">Aucune vidéo configurée</span>
+                      <span v-if="isEditMode" class="text-xs mt-2 text-amber-500">Ajoutez l'URL ci-dessous.</span>
+                    </div>
+                  </div>
+                  
+                  <div v-if="hasP3SecondVideo && !isEditMode" class="flex gap-2 mt-4">
+                    <button type="button" @click.prevent="p3ActiveVideoIndex = 1" :class="['flex-1 py-2 rounded-lg text-xs font-bold transition-colors', p3ActiveVideoIndex === 1 ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-200 text-slate-600 hover:bg-slate-300']"><i class="fa-solid fa-play-circle mr-1.5"></i> Vidéo n°1</button>
+                    <button type="button" @click.prevent="p3ActiveVideoIndex = 2" :class="['flex-1 py-2 rounded-lg text-xs font-bold transition-colors', p3ActiveVideoIndex === 2 ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-200 text-slate-600 hover:bg-slate-300']"><i class="fa-solid fa-play-circle mr-1.5"></i> Vidéo n°2</button>
+                  </div>
+              </div>
+
+              <!-- Champs du Mode Édition -->
+              <div v-if="isEditMode" class="bg-amber-50 p-5 rounded-xl border-2 border-amber-300 shadow-sm animate-fade-in space-y-4 mt-4">
+                  <h4 class="font-bold text-amber-900 text-sm flex items-center"><i class="fa-solid fa-cogs mr-2 text-amber-600"></i> Configuration des vidéos</h4>
+                  <div>
+                      <label class="text-xs font-bold text-amber-800 block mb-1">Lien de la Vidéo 1 :</label>
+                      <input type="text" v-model="content['pm_p3_vid1_' + p3SelectedStep.toLowerCase()]" placeholder="Lien Google Drive ou YouTube" class="w-full p-2.5 text-xs border border-amber-300 rounded-lg outline-none focus:border-amber-500 bg-white">
+                  </div>
+                  <div>
+                      <label class="text-xs font-bold text-amber-800 block mb-1">Lien de la Vidéo 2 (Optionnel) :</label>
+                      <input type="text" v-model="content['pm_p3_vid2_' + p3SelectedStep.toLowerCase()]" placeholder="Lien Google Drive ou YouTube" class="w-full p-2.5 text-xs border border-amber-300 rounded-lg outline-none focus:border-amber-500 bg-white">
+                  </div>
+              </div>
+          </div>
+       </div>
+    </div>
+    <div v-else class="mt-8 bg-slate-50 p-6 rounded-2xl border border-slate-200 text-center text-slate-500 animate-fade-in">
+       <i class="fa-solid fa-hand-pointer text-3xl mb-3 text-slate-400"></i>
+       <p class="font-bold text-slate-700">Cliquez sur une étape du diagramme ci-dessus.</p>
+       <p class="text-sm mt-1">Vous devez découvrir les 15 étapes pour valider le module (20 XP par étape).</p>
+       <div class="mt-4 w-64 mx-auto bg-slate-200 rounded-full h-2.5 overflow-hidden">
+           <div class="bg-blue-500 h-2.5 rounded-full transition-all duration-500" :style="{ width: (p3ClickedSteps.length / 15 * 100) + '%' }"></div>
+       </div>
+       <p class="text-xs font-bold mt-2 text-blue-600">{{ p3ClickedSteps.length }} / 15 étapes découvertes</p>
+    </div>
+
+  </div>
+
+  <!-- Custom Validation Button avec Forçage Manuel -->
+  <div class="mt-auto pt-6 flex justify-end shrink-0">
+    <button type="button" onclick="setTimeout(() => window.scrollTo({top: 0, behavior: 'smooth'}), 100)" @click.prevent="if(typeof unlockedParts !== 'undefined' && !unlockedParts.includes(4)) { unlockedParts.push(4); } currentTab = String(currentTab).includes('part') ? 'part4' : 'p4'; window.scrollTo(0,0);" 
+            :disabled="p3ClickedSteps.length < 15 && !isDevMode" 
+            :class="['w-full md:w-auto shadow-md py-3 px-8 text-base font-bold transition-all rounded-xl', (p3ClickedSteps.length === 15 || isDevMode) ? 'btn-primary hover:-translate-y-0.5' : 'bg-slate-200 text-slate-400 cursor-not-allowed']">
+      Passer à la Partie 4 <i class="fa-solid fa-arrow-right ml-2"></i>
+    </button>
+  </div>
+</div>
+
+<!-- ========================================= -->
+<!-- PARTIE 4 : MANIPULATION PLANS DE CHARGE   -->
+<!-- ========================================= -->
+<div v-if="currentPartNumber === 4 || currentTab === 'p4' || currentTab === 'part4'" class="space-y-8 animate-fade-in pb-10 flex flex-col min-h-[calc(100vh-100px)]">
+
+   <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
+     <div class="absolute top-0 left-0 w-1.5 h-full bg-emerald-600"></div>
+     <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center pl-2">
+       <i class="fa-solid fa-file-excel text-blue-500 mr-3"></i> 
+       <span v-if="!isEditMode">{{ content.pm_p4_main_title || 'Partie 4 : Générer et maintenir l\'Appel de Charge' }}</span>
+       <input v-else v-model="content.pm_p4_main_title" class="border p-1 w-full bg-yellow-50 text-xl font-bold" placeholder="Titre de la partie">
+     </h2>
+     
+     <div v-if="!isEditMode" class="text-slate-700 text-[15px] leading-relaxed pl-2 cms-content" v-html="content.pm_p4_intro || '<p>Dans OPTIMA, l\'appel de charge se fait via des modèles de plans de charge pré-paramétrés dans Google Sheet.<br><strong>Votre rôle principal dans l\'application est de générer les appels de charge et de les maintenir à jour tout au long de la vie de vos projets.</strong></p>'"></div>
+     <div v-else class="pl-2"><html-editor v-model="content.pm_p4_intro" class="min-h-[100px]" placeholder="Texte d'introduction..."></html-editor></div>
+   </div>
+
+   <div class="bg-slate-50 p-8 rounded-2xl border border-slate-200 shadow-inner">
+      <h3 class="font-bold text-slate-800 mb-4 text-xl flex items-center">
+         <i class="fa-solid fa-layer-group text-indigo-500 mr-3"></i> 
+         <span v-if="!isEditMode">{{ content.pm_p4_struct_title || 'Structure du Modèle de base' }}</span>
+         <input v-else v-model="content.pm_p4_struct_title" class="border p-1 flex-1 bg-yellow-50 text-lg" placeholder="Titre structure">
+      </h3>
+      
+      <div v-if="!isEditMode" class="text-sm text-slate-600 mb-6 cms-content" v-html="content.pm_p4_struct_desc || '<p>Chacun des modèles possède au minimum 4 onglets obligatoires :</p>'"></div>
+      <div v-else class="mb-6"><html-editor v-model="content.pm_p4_struct_desc" class="min-h-[60px]" placeholder="Sous-titre structure..."></html-editor></div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+         <div class="bg-white p-5 rounded-xl border border-indigo-200 shadow-sm hover:-translate-y-1 transition-transform border-t-4 border-t-indigo-500 flex flex-col">
+            <h4 class="font-bold text-indigo-900 mb-3 flex items-center"><i class="fa-solid fa-id-card mr-2 text-indigo-500 text-lg"></i> 1. ID_Card</h4>
+            <div v-if="!isEditMode" class="text-xs text-slate-600 leading-relaxed cms-content flex-grow" v-html="content.pm_p4_card_1 || '<p>La carte d\'identité du projet. Elle contient les données du projet dont l\'<strong>ID</strong>, la <strong>date de début et de fin</strong> de l\'appel de charge et le <strong>Cost Center</strong> du projet.</p>'"></div>
+            <html-editor v-else v-model="content.pm_p4_card_1" class="flex-grow min-h-[120px]"></html-editor>
+         </div>
+         
+         <div class="bg-white p-5 rounded-xl border border-amber-200 shadow-sm hover:-translate-y-1 transition-transform border-t-4 border-t-amber-500 flex flex-col">
+            <h4 class="font-bold text-amber-900 mb-3 flex items-center"><i class="fa-solid fa-database mr-2 text-amber-500 text-lg"></i> 2. Référentiel</h4>
+            <div v-if="!isEditMode" class="text-xs text-slate-600 leading-relaxed cms-content flex-grow" v-html="content.pm_p4_card_2 || '<p>Contient tout le référentiel <em>Code Métier / Cost Center / Sub Cost Center / UAP</em> utilisé par l\'application. Il sert à s\'assurer de la cohérence entre le référentiel de l\'appel de charge et de l\'application.</p>'"></div>
+            <html-editor v-else v-model="content.pm_p4_card_2" class="flex-grow min-h-[120px]"></html-editor>
+         </div>
+
+         <div class="bg-white p-5 rounded-xl border border-emerald-200 shadow-sm hover:-translate-y-1 transition-transform border-t-4 border-t-emerald-500 flex flex-col">
+            <h4 class="font-bold text-emerald-900 mb-3 flex items-center"><i class="fa-solid fa-clock mr-2 text-blue-500 text-lg"></i> 3. Workload</h4>
+            <div v-if="!isEditMode" class="text-xs text-slate-600 leading-relaxed cms-content flex-grow" v-html="content.pm_p4_card_3 || '<p>Onglet contenant la charge en heures appelée par le projet en utilisant le référentiel de l\'application. Chaque appel de charge se fait en heure par mois pour au minimum, un code métier et un Cost Center (s\'il est vide on prend celui dans l\'ID_Card). Il est également possible de sélectionner un Sub Cost Center et un UAP.</p>'"></div>
+            <html-editor v-else v-model="content.pm_p4_card_3" class="flex-grow min-h-[120px]"></html-editor>
+         </div>
+
+         <div class="bg-white p-5 rounded-xl border border-rose-200 shadow-sm hover:-translate-y-1 transition-transform border-t-4 border-t-rose-500 relative flex flex-col">
+            <span class="absolute top-3 right-3 bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Optionnel</span>
+            <h4 class="font-bold text-rose-900 mb-3 flex items-center"><i class="fa-solid fa-shield-check mr-2 text-rose-500 text-lg"></i> 4. Read Me</h4>
+            <div v-if="!isEditMode" class="text-xs text-slate-600 leading-relaxed cms-content flex-grow" v-html="content.pm_p4_card_4 || '<p>Cet onglet n\'est pas obligatoire en tant que tel, mais il vérifie les données du fichier en utilisant les mêmes règles que l\'application lors de l\'ingestion. S\'il y a un <strong>False</strong> dans la liste, l\'application va rejeter l\'ingestion.</p>'"></div>
+            <html-editor v-else v-model="content.pm_p4_card_4" class="flex-grow min-h-[120px]"></html-editor>
+         </div>
+      </div>
+   </div>
+ <div class="bg-blue-50 border border-blue-200 p-6 rounded-2xl flex items-start">
+      <div class="bg-blue-100 text-blue-600 w-12 h-12 rounded-full flex items-center justify-center text-xl shrink-0 mr-4 shadow-sm">
+         <i class="fa-solid fa-lightbulb"></i>
+      </div>
+      <div class="w-full">
+         <h4 class="font-bold text-blue-900 mb-2 text-lg">
+            <span v-if="!isEditMode">{{ content.pm_p4_templates_title || 'Modèles et Templates' }}</span>
+            <input v-else v-model="content.pm_p4_templates_title" class="border p-1 w-full bg-yellow-50 text-sm" placeholder="Titre templates">
+         </h4>
+         <div v-if="!isEditMode" class="text-sm text-blue-800 leading-relaxed cms-content" v-html="content.pm_p4_templates_desc || '<p>Ces onglets forment la base du template. Il existe également des modèles plus complets issus des templates existants dans les BUs et des abaques par produit. Ceux-ci sont proposés par les BU et adaptés pour OPTIMA.</p><p><strong>Au moment de créer le premier appel de charge du projet, vous pouvez sélectionner le modèle qui vous convient.</strong></p>'"></div>
+         <div v-else><html-editor v-model="content.pm_p4_templates_desc" class="min-h-[100px]"></html-editor></div>
+      </div>
+   </div>
+   
+    <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden shrink-0">
+      <h3 class="font-bold text-slate-800 mb-4 text-xl flex items-center">
+         <i class="fa-solid fa-clipboard-list text-blue-500 mr-3"></i> 
+         <span v-if="!isEditMode">{{ content.pm_p4_verif_title || 'Vérifications des données' }}</span>
+         <input v-else v-model="content.pm_p4_verif_title" class="border p-1 flex-1 bg-yellow-50 text-lg" placeholder="Titre vérifications">
+      </h3>
+      
+      <div v-if="!isEditMode" class="text-sm text-slate-600 mb-6 cms-content" v-html="content.pm_p4_verif_desc || '<p>Pour s\'assurer de la bonne ingestion des données, les plans de charge et les données qu\'ils contiennent doivent respecter les règles suivantes, réparties par onglet :</p>'"></div>
+      <div v-else class="mb-6"><html-editor v-model="content.pm_p4_verif_desc" class="min-h-[60px]" placeholder="Description des vérifications..."></html-editor></div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+         
+         <div class="bg-indigo-50/50 p-6 rounded-xl border border-indigo-100 flex flex-col h-full">
+            <h4 class="font-bold text-indigo-900 mb-4 text-sm uppercase tracking-wider flex items-center border-b border-indigo-200 pb-2">
+               <i class="fa-solid fa-id-card text-indigo-500 mr-2"></i> Onglet ID_Card
+            </h4>
+            
+            <div class="space-y-4 flex-grow">
+               <div class="bg-white p-4 rounded-lg shadow-sm border border-indigo-100">
+                  <h5 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2"><i class="fa-regular fa-calendar-check mr-1"></i> Structure & Dates</h5>
+                  <div v-if="!isEditMode" class="text-sm text-slate-700 cms-content" v-html="content.pm_p4_v_id_struct || '<ul><li>L\'onglet ID_Card existe</li><li>ID Projet n\'est pas vide</li><li>La cellule B6 est une date (Date de début)</li><li>La cellule B7 est une date (Date de fin)</li><li>La date de fin est supérieure à la date de début</li></ul>'"></div>
+                  <html-editor v-else v-model="content.pm_p4_v_id_struct" class="min-h-[120px]"></html-editor>
+               </div>
+               
+               <div class="bg-white p-4 rounded-lg shadow-sm border border-indigo-100">
+                  <h5 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2"><i class="fa-solid fa-link mr-1"></i> Référentiel</h5>
+                  <div v-if="!isEditMode" class="text-sm text-slate-700 cms-content" v-html="content.pm_p4_v_id_ref || '<ul><li>La BU est issue du référentiel de l\'application</li></ul>'"></div>
+                  <html-editor v-else v-model="content.pm_p4_v_id_ref" class="min-h-[80px]"></html-editor>
+               </div>
+            </div>
+         </div>
+
+         <div class="bg-emerald-50/50 p-6 rounded-xl border border-emerald-100 flex flex-col h-full">
+            <h4 class="font-bold text-emerald-900 mb-4 text-sm uppercase tracking-wider flex items-center border-b border-emerald-200 pb-2">
+               <i class="fa-solid fa-clock text-blue-500 mr-2"></i> Onglet Workload
+            </h4>
+            
+            <div class="space-y-4 flex-grow">
+               <div class="bg-white p-4 rounded-lg shadow-sm border border-emerald-100">
+                  <h5 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2"><i class="fa-regular fa-calendar-check mr-1"></i> Structure & Dates</h5>
+                  <div v-if="!isEditMode" class="text-sm text-slate-700 cms-content" v-html="content.pm_p4_v_wl_struct || '<ul><li>L\'onglet Workload existe</li><li>Après la colonne F, la ligne 1 contient au moins une date</li><li>Après la colonne F, la ligne 1 ne contient que des dates</li><li>Le premier mois de la ligne 1 correspond à la date de début dans ID_Card</li><li>Le dernier mois de la ligne 1 correspond à la date de fin dans ID_Card</li></ul>'"></div>
+                  <html-editor v-else v-model="content.pm_p4_v_wl_struct" class="min-h-[150px]"></html-editor>
+               </div>
+               
+               <div class="bg-white p-4 rounded-lg shadow-sm border border-emerald-100">
+                  <h5 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2"><i class="fa-solid fa-link mr-1"></i> Référentiel</h5>
+                  <div v-if="!isEditMode" class="text-sm text-slate-700 cms-content" v-html="content.pm_p4_v_wl_ref || '<ul><li>Les codes Métiers sont issus du référentiel de l\'application</li><li>Les BUs renseignées dans la colonne K sont vides ou issues du référentiel</li><li>Les Sub Cost Center (colonne F) sont vides ou issus du référentiel</li><li>Les UAP (colonne H) sont vides ou issues du référentiel</li></ul>'"></div>
+                  <html-editor v-else v-model="content.pm_p4_v_wl_ref" class="min-h-[150px]"></html-editor>
+               </div>
+
+               <div class="bg-white p-4 rounded-lg shadow-sm border border-emerald-100">
+                  <h5 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2"><i class="fa-solid fa-calculator mr-1"></i> Valeurs</h5>
+                  <div v-if="!isEditMode" class="text-sm text-slate-700 cms-content" v-html="content.pm_p4_v_wl_val || '<ul><li>Au moins un code métier est renseigné à partir de la ligne 2</li><li>La charge est renseignée avec des nombres positifs et raisonnables (&lt;100000)</li></ul>'"></div>
+                  <html-editor v-else v-model="content.pm_p4_v_wl_val" class="min-h-[100px]"></html-editor>
+               </div>
+            </div>
+         </div>
+      </div>
+   </div>
+
+  
+
+   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="bg-indigo-50 border border-indigo-200 p-6 rounded-2xl flex flex-col">
+         <h4 class="font-bold text-indigo-900 mb-3 text-lg flex items-center">
+            <i class="fa-solid fa-server mr-2 text-indigo-500"></i>
+            <span v-if="!isEditMode">{{ content.pm_p4_ingest_title || 'Le mécanisme d\'Ingestion et de Validation' }}</span>
+            <input v-else v-model="content.pm_p4_ingest_title" class="border p-1 w-full bg-yellow-50 text-sm" placeholder="Titre ingestion">
+         </h4>
+         <div v-if="!isEditMode" class="text-sm text-indigo-800 leading-relaxed cms-content flex-grow" v-html="content.pm_p4_ingest_desc || '<p>Remplir le Google Sheet ne suffit pas. Pour que les heures soient prises en compte par le moteur de calcul de l\'entreprise, le fichier doit obligatoirement être <strong>ingéré et validé (Ingest &amp; Validate)</strong> par le système.</p><p>C\'est cette action qui transforme le fichier tableur en véritable charge de travail (Workload). Les plans de charge sont versionnés : chaque modification donne lieu à une nouvelle version. En phase d\'exécution, le Chef de Projet doit d\'ailleurs créer une nouvelle version de ré-estimation chaque mois (appelée le P3).</p>'"></div>
+         <div v-else class="flex-grow"><html-editor v-model="content.pm_p4_ingest_desc" class="min-h-[150px]"></html-editor></div>
+      </div>
+
+      <div class="bg-emerald-50 border border-emerald-200 p-6 rounded-2xl flex flex-col">
+         <h4 class="font-bold text-emerald-900 mb-3 text-lg flex items-center">
+            <i class="fa-solid fa-chart-line mr-2 text-blue-500"></i>
+            <span v-if="!isEditMode">{{ content.pm_p4_impact_title || 'Son impact sur vos tableaux de bord' }}</span>
+            <input v-else v-model="content.pm_p4_impact_title" class="border p-1 w-full bg-yellow-50 text-sm" placeholder="Titre impact">
+         </h4>
+         <div v-if="!isEditMode" class="text-sm text-emerald-800 leading-relaxed cms-content flex-grow" v-html="content.pm_p4_impact_desc || '<p>Une fois validé, le plan de charge alimente la <strong>courbe rouge de charge (Workload)</strong> sur vos graphiques d\'adéquation Charge/Capacité.</p><ul class=\'mt-2 space-y-2\'><li><strong>Conversion en ETP :</strong> Ces heures peuvent être converties automatiquement en Équivalents Temps Plein (ETP / FTE) en fonction de la catégorie de travail standard du métier.</li><li><strong>La notion de Scénario :</strong> Si le projet est encore en avant-vente (commercial), sa charge s\'affichera selon le scénario de probabilité choisi (Min, Expected, Max). En revanche, si le projet est \'en exécution\' (gagné), sa charge devient certaine et est toujours comptabilisée dans le scénario \'Min\'.</li></ul>'"></div>
+         <div v-else class="flex-grow"><html-editor v-model="content.pm_p4_impact_desc" class="min-h-[150px]"></html-editor></div>
+      </div>
+   </div>
+
+   <!-- BLOC CONSIGNES ET DÉMARRAGE DE L'EXERCICE -->
+   <div v-if="!content.sheetSuccess" class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
+      <div class="absolute top-0 left-0 w-1.5 h-full bg-blue-500"></div>
+      <h3 class="font-bold text-slate-800 text-lg mb-2 flex items-center pl-2">
+         <i class="fa-solid fa-bullseye text-blue-500 mr-3"></i> 
+         <span v-if="!isEditMode">{{ content.pm_p4_exo_title || 'Votre objectif (Simulation)' }}</span>
+         <input v-else v-model="content.pm_p4_exo_title" class="border p-1 w-full bg-yellow-50 text-sm" placeholder="Titre objectif">
+      </h3>
+      
+      <!-- Les consignes à jour -->
+      <div v-if="!isEditMode" class="text-sm text-slate-600 mb-6 pl-2 cms-content" v-html="content.pm_p4_exo_desc || '<p>Dans le fichier ci-dessous, veuillez paramétrer l\'appel de charge suivant :</p><ul class=\'list-disc pl-5 mt-2\'><li><strong>Onglet ID_Card :</strong> Date de début au 01/01/2030, date de fin au 31/03/2030. Renseignez la BU AT35.</li><li><strong>Onglet Workload :</strong> Ajoutez une ligne pour le métier H231 (répartissez 10h, sans préciser de CC/UAP). Ajoutez une ligne pour H110 (répartissez 30h, en associant un CC, UAP et Sub Cost Center au choix).</li></ul><p class=\'mt-3\'>Cliquez ensuite sur <em>Ingestion</em>.</p>'"></div>
+      <div v-else class="mb-6 pl-2"><html-editor v-model="content.pm_p4_exo_desc" class="min-h-[120px]" placeholder="Consignes de l'exercice..."></html-editor></div>
+      
+      <div v-if="!tempSheetUrl" class="pl-2">
+         <button @click.prevent="startSimulation" :disabled="isCreatingSheet" class="btn-primary py-3 px-8 text-base shadow-md disabled:opacity-50 w-full sm:w-auto">
+            <span v-if="isCreatingSheet"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Préparation de la simulation...</span>
+            <span v-else><i class="fa-solid fa-play mr-2"></i> Démarrer la simulation</span>
+         </button>
+      </div>
+   </div>
+
+   <!-- BLOC IFRAME GOOGLE SHEET -->
+   <div v-if="tempSheetUrl && !content.sheetSuccess" class="bg-white p-2 rounded-2xl shadow-lg border-2 border-emerald-400 relative overflow-hidden flex flex-col mt-[-1rem]">
+      <div class="bg-emerald-50 text-emerald-800 text-sm font-bold px-4 py-3 rounded-t-xl flex justify-between items-center mb-2">
+         <span class="flex items-center"><i class="fa-solid fa-circle-dot text-red-500 animate-pulse mr-3 text-lg"></i> Simulation active</span>
+         <span class="hidden md:inline text-xs font-normal bg-white px-2 py-1 rounded border border-emerald-200">Saisissez vos données directement ci-dessous</span>
+      </div>
+      
+      <div class="w-full h-[500px] bg-slate-100 rounded-lg overflow-hidden border border-slate-200 relative">
+         <iframe :src="tempSheetUrl" width="100%" height="100%" frameborder="0" class="absolute top-0 left-0 w-full h-full"></iframe>
+      </div>
+      
+      <!-- Bouton Ingestion (Mis à jour) -->
+      <div class="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col md:flex-row items-center justify-between gap-4">
+         <div class="text-sm font-medium text-slate-600 flex items-center">
+            <i class="fa-solid fa-server text-xl text-slate-400 mr-3"></i>
+            Prêt à simuler l'intégration dans l'application ?
+         </div>
+         <button @click.prevent="verifyGoogleSheet" :disabled="content.isVerifyingSheet" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-8 rounded-xl transition-colors shadow-md disabled:opacity-50 w-full md:w-auto">
+            <span v-if="content.isVerifyingSheet"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Ingestion en cours...</span>
+            <span v-else><i class="fa-solid fa-cloud-arrow-up mr-2"></i> Ingestion</span>
+         </button>
+      </div>
+   </div>
+
+   <!-- MESSAGES D'ERREUR OU SUCCÈS (Avec whitespace-pre-line) -->
+   <div v-if="content.sheetError" class="p-4 bg-red-50 text-red-600 rounded-2xl border border-red-200 shadow-sm flex items-start">
+      <i class="fa-solid fa-circle-exclamation text-2xl mr-4 mt-1 animate-pulse"></i> 
+      <span class="font-bold text-sm whitespace-pre-line leading-relaxed">{{ content.sheetError }}</span>
+   </div>
+
+   <div v-if="content.sheetSuccess" class="p-8 bg-emerald-50 rounded-2xl border border-emerald-200 shadow-sm flex flex-col items-center text-center animate-fade-in">
+      <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-3xl mb-4 shadow-sm">
+         <i class="fa-solid fa-check"></i>
+      </div>
+      <h3 class="text-xl font-bold text-emerald-800 mb-2">Opération terminée !</h3>
+      <p class="text-emerald-700 text-sm max-w-lg whitespace-pre-line leading-relaxed">{{ content.sheetSuccess }}<br><br>Le fichier temporaire a été nettoyé. Vous pouvez passer à l'étape suivante.</p>
+   </div>
+   
+   <div class="mt-auto pt-6 flex justify-between items-center shrink-0 border-t border-slate-200">
+     <button type="button" @click.prevent="changeTab('home')" class="text-slate-500 hover:text-slate-800 font-medium px-4 py-2 transition bg-white border border-slate-200 rounded-xl shadow-sm">
+       <i class="fa-solid fa-arrow-left mr-1"></i> Retour accueil
+     </button>
+     
+     <button type="button" @click.prevent="validateCurrentPart" 
+        :disabled="(!content.sheetSuccess || p4ClickedBlocks.length < 4) && !isDevMode" 
+        :class="['shadow-md py-3 px-8 text-base font-bold transition-all rounded-xl', ((content.sheetSuccess && p4ClickedBlocks.length === 4) || isDevMode) ? 'btn-primary hover:-translate-y-0.5' : 'bg-slate-200 text-slate-400 cursor-not-allowed']">
+  Passer à la Partie 5 <i class="fa-solid fa-arrow-right ml-2"></i>
+</button>
+   </div>
+</div>
+<!-- ========================================= -->
+<!-- PARTIE 5 : AFFECTATION CHARGE             -->
+<!-- ========================================= -->
+
+<div v-if="currentPartNumber === 5 || currentTab === 'p5' || currentTab === 'part5'" class="space-y-8 animate-fade-in pb-10 flex flex-col min-h-[calc(100vh-100px)]">
+<div class="space-y-8 animate-fade-in">
+  
+  <!-- En-tête de la section (Thème Emerald) -->
+  <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
+  <div class="absolute top-0 left-0 w-1.5 h-full bg-emerald-600"></div>
+  <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center pl-2">
+    <i class="fa-solid fa-file-excel text-blue-500 mr-3"></i> 
+    <!-- Utilisation de guillemets doubles (") pour encadrer le texte contenant une apostrophe -->
+    <span v-if="!isEditMode">{{ content.pm_p5_main_title || "Partie 5 : Visualiser la réponse à l'appel de charge" }}</span>
+    <input v-else v-model="content.pm_p5_main_title" class="border p-1 w-full bg-yellow-50 text-xl font-bold" placeholder="Titre de la partie">
+  </h2>
+  
+  <!-- Ajout d'un antislash (\) avant l'apostrophe de l'appel : l\'appel -->
+  <div v-if="!isEditMode" class="text-slate-700 text-[15px] leading-relaxed pl-2 cms-content" v-html="content.pm_p5_intro || '<p>Une fois l\'appel de charge réalisé, vous passez le relai aux managers qui vont devoir répondre au besoins projet en y affectant des ressources.<br><strong>Dans cette partie nous verrons comment visualiser les ressources qui vous ont été assignées.</strong></p>'"></div>
+  <div v-else class="pl-2"><html-editor v-model="content.pm_p5_intro" class="min-h-[100px]" placeholder="Texte d'introduction..."></html-editor></div>
+</div>
+
+  <!-- BLOC 1 : LE RÔLE DU MANAGER -->
+  <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
+    <div class="absolute top-0 left-0 w-1.5 h-full bg-emerald-500"></div>
+    <h3 class="font-bold text-slate-800 mb-6 pl-2 flex items-center text-lg">
+      <i class="fa-solid fa-handshake-angle text-emerald-500 mr-3 animate-pulse"></i> Le passage de relais au Manager
+    </h3>
+    
+    <p class="text-slate-600 mb-6 leading-relaxed pl-2">
+      Une fois que le Chef de Projet (PM) a réalisé son <strong>appel de charge</strong> (en indiquant les métiers et les volumes d'heures nécessaires), le relais est passé aux Managers. C'est à eux de traduire ce besoin capacitaire en ressources humaines réelles.
+    </p>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-2 pl-2">
+      <!-- Carte PM -->
+      <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 flex flex-col justify-between">
+        <div>
+          <div class="w-12 h-12 bg-slate-100 text-slate-600 rounded-full flex items-center justify-center text-xl mb-4 shadow-sm">
+            <i class="fa-solid fa-bullhorn"></i>
+          </div>
+          <h4 class="font-bold text-slate-800 mb-2">1. Le besoin (PM)</h4>
+          <p class="text-sm text-slate-600">Le PM exprime un besoin générique en heure pas mois en utilisant le référentiel de l'application: <br><em class="text-xs text-slate-500">"J'ai besoin de 150 heures d'Ingénieur Calcul pour le mois de Novembre sur mon projet."</em></p>
+        </div>
+      </div>
+
+      <!-- Carte Manager -->
+      <div class="bg-emerald-50/40 p-6 rounded-xl border border-emerald-100 flex flex-col justify-between">
+        <div>
+          <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-xl mb-4 shadow-sm">
+            <i class="fa-solid fa-user-check"></i>
+          </div>
+          <h4 class="font-bold text-emerald-800 mb-2">2. L'affectation (Manager)</h4>
+          <p class="text-sm text-slate-600">Dans OPTIMA, le Manager crée ses équipes et réalise l'<strong>affectation nominative</strong> en prenant en compte leur disponibilité et leurs compétences : <br><em class="text-xs text-emerald-600">"J'affecte 80h à Thomas et 70h à Sarah."</em></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BLOC 2 : VISUALISER LES AFFECTATIONS (2 MÉTHODES) -->
+  <!-- BLOC 2 : VISUALISER LES AFFECTATIONS (2 MÉTHODES ENTIÈREMENT MODIFIABLES) -->
+  <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden mt-8">
+    <div class="absolute top-0 left-0 w-1.5 h-full bg-emerald-500"></div>
+    
+    <!-- Titre principal du bloc -->
+    <h3 class="font-bold text-slate-800 mb-4 pl-2 flex items-center text-lg">
+      <i class="fa-solid fa-magnifying-glass-chart text-emerald-500 mr-3"></i> 
+      <span v-if="!isEditMode">{{ content.pm_p5_b2_title || "Consulter l'équipe affectée au projet" }}</span>
+      <input v-else v-model="content.pm_p5_b2_title" class="border p-1 flex-1 bg-yellow-50 text-lg font-bold" placeholder="Titre du bloc">
+    </h3>
+    
+    <!-- Introduction du bloc -->
+    <div v-if="!isEditMode" class="text-slate-600 mb-8 leading-relaxed pl-2 cms-content" v-html="content.pm_p5_b2_intro || '<p>En tant que Chef de Projet, vous devez garder une visibilité totale sur qui travaille sur votre périmètre. Il existe <strong>deux moyens principaux</strong> de visualiser les ressources qui vous ont été assignées par les managers.</p>'"></div>
+    <div v-else class="pl-2 mb-8">
+      <p class="text-xs font-bold text-slate-400 uppercase mb-1">Texte d'introduction :</p>
+      <html-editor v-model="content.pm_p5_b2_intro" class="min-h-[80px]"></html-editor>
+    </div>
+
+    <!-- MÉTHODE 1 : LA VIDÉO -->
+    <div class="ml-2 mb-10">
+      <h4 class="font-bold text-emerald-700 mb-4 text-md flex items-center">
+        <span class="bg-emerald-100 text-emerald-700 w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 shadow-sm">1</span> 
+        <span v-if="!isEditMode">{{ content.pm_p5_m1_title || "Depuis l'onglet dédié du projet" }}</span>
+        <input v-else v-model="content.pm_p5_m1_title" class="border p-1 flex-1 bg-yellow-50 font-bold" placeholder="Titre de la méthode 1">
+      </h4>
+      
+      <!-- Instructions d'accès 1 -->
+      <div class="bg-emerald-50/50 border border-emerald-100 rounded-xl p-5 mb-6">
+        <h5 class="font-bold text-emerald-800 mb-3 text-xs uppercase tracking-wide flex items-center">
+          <span v-if="!isEditMode">{{ content.pm_p5_m1_path_label || "Comment accéder à cette vue :" }}</span>
+          <input v-else v-model="content.pm_p5_m1_path_label" class="border p-1 bg-yellow-50 text-xs w-64" placeholder="Titre pour le chemin">
+        </h5>
+        
+        <div v-if="!isEditMode" class="flex flex-col sm:flex-row sm:items-center text-sm text-slate-700 gap-2 sm:gap-0">
+          <span class="bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm font-medium text-center text-xs">{{ content.pm_p5_m1_step1 || "Tableau de bord" }}</span>
+          <i class="fa-solid fa-chevron-right hidden sm:block mx-3 text-slate-400 text-xs"></i>
+          <span class="bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm font-medium text-center text-xs">{{ content.pm_p5_m1_step2 || "Mon Projet" }}</span>
+          <i class="fa-solid fa-chevron-right hidden sm:block mx-3 text-slate-400 text-xs"></i>
+          <span class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg shadow-sm font-bold text-center text-xs">{{ content.pm_p5_m1_step3 || "Onglet \"Ressources / Plan de charge\"" }}</span>
+        </div>
+        <div v-else class="flex flex-col gap-2">
+          <input v-model="content.pm_p5_m1_step1" class="border p-1 text-xs w-full bg-yellow-50" placeholder="Chemin étape 1">
+          <input v-model="content.pm_p5_m1_step2" class="border p-1 text-xs w-full bg-yellow-50" placeholder="Chemin étape 2">
+          <input v-model="content.pm_p5_m1_step3" class="border p-1 text-xs w-full bg-yellow-50" placeholder="Chemin étape 3 (final)">
+        </div>
+      </div>
+
+      <!-- ZONE DE VIDÉO -->
+      <div>
+        <div v-if="isEditMode" class="w-full bg-emerald-50 border-2 border-dashed border-emerald-300 rounded-xl p-8 flex flex-col items-center justify-center text-slate-600">
+          <i class="fa-solid fa-file-video text-4xl mb-4 text-emerald-400"></i>
+          <p class="font-bold text-sm mb-2 text-slate-700">Lien de votre vidéo (Google Drive, YouTube, etc.) :</p>
+          <input type="text" v-model="content.pm_p5_video" placeholder="Ex: https://drive.google.com/file/d/.../preview" class="w-full max-w-lg p-2.5 border border-emerald-200 rounded-lg outline-none focus:border-emerald-500 bg-white text-sm shadow-sm">
+        </div>
+        
+        <div v-else-if="content.pm_p5_video" class="w-full rounded-xl overflow-hidden shadow-md border border-slate-200 bg-slate-100">
+          <iframe :src="content.pm_p5_video" class="w-full aspect-video border-0" allow="autoplay; fullscreen" allowfullscreen></iframe>
+        </div>
+        
+        <div v-else class="w-full bg-slate-50 border-2 border-dashed border-emerald-200 rounded-xl p-12 flex flex-col items-center justify-center group transition-colors">
+          <i class="fa-solid fa-circle-play text-5xl mb-4 text-emerald-200"></i>
+          <p class="font-medium text-sm text-slate-700">Emplacement de la vidéo de démonstration</p>
+        </div>
+      </div>
+
+      <!-- EXPLICATION VIDÉO (Nouveau design) -->
+      <div class="mt-6 border-l-4 border-emerald-400 bg-slate-50 p-5 rounded-r-xl">
+        <h6 class="text-emerald-700 font-bold text-sm mb-2 flex items-center">
+          <i class="fa-solid fa-lightbulb mr-2 text-amber-400"></i> Explication
+        </h6>
+        <div v-if="!isEditMode" class="text-slate-600 text-[14px] leading-relaxed cms-content" v-html="content.pm_p5_m1_exp || '<p>Cette vidéo vous montre comment vérifier la présence des collaborateurs sur votre projet. Vous pourrez y consulter directement les heures affectées par mois pour chaque personne.</p>'"></div>
+        <div v-else>
+          <html-editor v-model="content.pm_p5_m1_exp" class="min-h-[80px]" placeholder="Texte d'explication de la vidéo..."></html-editor>
+        </div>
+      </div>
+    </div>
+
+    <!-- Séparateur visuel -->
+    <hr class="border-slate-200 mb-8 ml-2">
+
+    <!-- MÉTHODE 2 : L'IMAGE / CAPTURE D'ÉCRAN -->
+    <div class="ml-2 mb-4">
+      <h4 class="font-bold text-emerald-700 mb-4 text-md flex items-center">
+        <span class="bg-emerald-100 text-emerald-700 w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 shadow-sm">2</span> 
+        <span v-if="!isEditMode">{{ content.pm_p5_m2_title || "Depuis la vue globale des affectations" }}</span>
+        <input v-else v-model="content.pm_p5_m2_title" class="border p-1 flex-1 bg-yellow-50 font-bold" placeholder="Titre de la méthode 2">
+      </h4>
+
+      <!-- Instructions d'accès 2 -->
+      <div class="bg-emerald-50/50 border border-emerald-100 rounded-xl p-5 mb-6">
+        <h5 class="font-bold text-emerald-800 mb-3 text-xs uppercase tracking-wide flex items-center">
+          <span v-if="!isEditMode">{{ content.pm_p5_m2_path_label || "Comment accéder à cette vue :" }}</span>
+          <input v-else v-model="content.pm_p5_m2_path_label" class="border p-1 bg-yellow-50 text-xs w-64" placeholder="Titre pour le chemin">
+        </h5>
+        
+        <div v-if="!isEditMode" class="flex flex-col sm:flex-row sm:items-center text-sm text-slate-700 gap-2 sm:gap-0">
+          <span class="bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm font-medium text-center text-xs">{{ content.pm_p5_m2_step1 || "Tableau de bord" }}</span>
+          <i class="fa-solid fa-chevron-right hidden sm:block mx-3 text-slate-400 text-xs"></i>
+          <span class="bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm font-medium text-center text-xs">{{ content.pm_p5_m2_step2 || "Rapports / Vues globales" }}</span>
+          
+        </div>
+        <div v-else class="flex flex-col gap-2">
+          <input v-model="content.pm_p5_m2_step1" class="border p-1 text-xs w-full bg-yellow-50" placeholder="Chemin étape 1">
+          <input v-model="content.pm_p5_m2_step2" class="border p-1 text-xs w-full bg-yellow-50" placeholder="Chemin étape 2">
+        </div>
+      </div>
+
+      <!-- ZONE DE CAPTURE D'ÉCRAN -->
+      <div>
+        <div v-if="isEditMode" class="w-full bg-emerald-50 border-2 border-dashed border-emerald-300 rounded-xl p-8 flex flex-col items-center justify-center text-slate-600">
+          <i class="fa-solid fa-image text-4xl mb-4 text-emerald-400"></i>
+          <p class="font-bold text-sm mb-2 text-slate-700">Lien de l'image (Google Drive ou classique .png) :</p>
+          <input type="text" v-model="content.pm_p5_image" placeholder="Ex: https://drive.google.com/file/d/.../preview" class="w-full max-w-lg p-2.5 border border-emerald-200 rounded-lg outline-none focus:border-emerald-500 bg-white text-sm shadow-sm">
+        </div>
+        
+        <!-- Si c'est un lien Google Drive -->
+        <div v-else-if="content.pm_p5_image && content.pm_p5_image.includes('drive.google.com')" class="w-full rounded-xl overflow-hidden shadow-md border border-slate-200 bg-slate-100">
+          <iframe :src="content.pm_p5_image" class="w-full min-h-[500px] border-0" allowfullscreen></iframe>
+        </div>
+        
+        <!-- Si c'est une image classique -->
+        <div v-else-if="content.pm_p5_image" class="w-full rounded-xl overflow-hidden shadow-sm border border-slate-200">
+          <img :src="content.pm_p5_image" alt="Vue globale des affectations" class="w-full h-auto object-contain">
+        </div>
+        
+        <div v-else class="w-full bg-slate-50 border-2 border-dashed border-emerald-200 rounded-xl p-12 flex flex-col items-center justify-center group transition-colors">
+          <i class="fa-solid fa-image text-5xl mb-4 text-emerald-200"></i>
+          <p class="font-medium text-sm text-slate-700">Emplacement de la capture d'écran</p>
+        </div>
+      </div>
+
+      <!-- EXPLICATION IMAGE (Nouveau design) -->
+      <div class="mt-6 border-l-4 border-emerald-400 bg-slate-50 p-5 rounded-r-xl">
+        <h6 class="text-emerald-700 font-bold text-sm mb-2 flex items-center">
+          <i class="fa-solid fa-lightbulb mr-2 text-amber-400"></i> Explication
+        </h6>
+        <div v-if="!isEditMode" class="text-slate-600 text-[14px] leading-relaxed cms-content" v-html="content.pm_p5_m2_exp || '<p>Cette seconde méthode vous offre une vision globale et transversale. C\'est particulièrement utile pour vérifier l\'adéquation générale de votre plan de charge d\'un seul coup d\'œil, sans entrer dans le détail de chaque projet.</p>'"></div>
+        <div v-else>
+          <html-editor v-model="content.pm_p5_m2_exp" class="min-h-[80px]" placeholder="Texte d'explication de l'image..."></html-editor>
+        </div>
+      </div>
+      
+      <!-- LÉGENDE GLOBALE (Note finale) -->
+      <div class="flex items-start bg-emerald-50/30 p-4 rounded-lg border border-emerald-100 mt-8">
+        <i class="fa-solid fa-circle-info text-emerald-600 mt-0.5 mr-3 text-lg"></i>
+        <div class="flex-1">
+          <div v-if="!isEditMode" class="text-sm text-slate-600 cms-content" v-html="content.pm_p5_final_note || '<p><strong>L\'objectif reste le même :</strong> Quel que soit l\'écran utilisé, vous devez contrôler que le total des heures nominatives correspond bien à votre appel de charge initial.</p>'"></div>
+          <div v-else>
+            <p class="text-xs font-bold text-emerald-700 uppercase mb-1">Informations supplémentaires sur l'affection de la charge :</p>
+            <html-editor v-model="content.pm_p5_final_note" class="min-h-[80px] bg-white"></html-editor>
+          </div>
+        </div>
+      </div>
+      </div> 
+  </div>
+  </div>
+</div>
