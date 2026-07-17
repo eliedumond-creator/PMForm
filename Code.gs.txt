@@ -1,0 +1,436 @@
+/**
+ * Fichier : Code.gs
+ * Point d'entrée et API de la Web App.
+ */
+
+const SPREADSHEET_ID = '1gj0fXumXQqHjvuJpByR_uHcnhEAs1b6r53gijj5B6Gk';
+const SHEET_NAME = 'Textes PM'; // Adapté à votre onglet existant
+
+function doGet(e) {
+  return HtmlService.createTemplateFromFile('index PM')
+    .evaluate()
+    .setTitle('OPTIMA Projets - Parcours PM & Sales')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+/**
+ * Permet d'inclure des sous-fichiers HTML (comme Training_PM.html)
+ */
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
+
+// =========================================================================
+// GESTION DU CONTENU (CMS GSHEET)
+// =========================================================================
+
+function initContentSheet() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = ss.getSheetByName(SHEET_NAME);
+  
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME);
+  }
+  
+  const defaultContent = [
+    ['Key', 'Value'],
+    ['pm_app_title', 'OPTIMA S&OP'],
+    ['pm_app_subtitle', 'Parcours PM & Sales']
+  ];
+  
+  sheet.getRange(1, 1, defaultContent.length, 2).setValues(defaultContent);
+  sheet.getRange(1, 1, 1, 2).setFontWeight('bold').setBackground('#E2E8F0');
+  sheet.setFrozenRows(1);
+  sheet.autoResizeColumns(1, 2);
+}
+
+/**
+ * Récupère le contenu depuis l'onglet "Textes PM"
+ */
+function getContent() {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(SHEET_NAME);
+    
+    if (!sheet) {
+      Logger.log("Onglet '" + SHEET_NAME + "' introuvable.");
+      return {};
+    }
+
+    const data = sheet.getDataRange().getValues();
+    const content = {};
+
+    // Parcours à partir de la ligne 1 (en ignorant l'en-tête Key/Value)
+    for (let i = 1; i < data.length; i++) {
+      const key = data[i][0];
+      const value = data[i][1];
+      if (key) {
+        content[key] = value;
+      }
+    }
+    return content;
+  } catch (e) {
+    Logger.log("Erreur dans getContent: " + e.toString());
+    return {};
+  }
+}
+
+/**
+ * Sauvegarde les modifications apportées en mode Édition
+ */
+function saveContent(updates) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    let sheet = ss.getSheetByName(SHEET_NAME);
+    if(!sheet) return false;
+    
+    const data = sheet.getDataRange().getValues();
+    const keysMap = {};
+    
+    // Mapper les clés existantes vers leur numéro de ligne
+    for (let i = 1; i < data.length; i++) {
+      keysMap[data[i][0]] = i + 1; 
+    }
+    
+    for (let key in updates) {
+      if (keysMap[key]) {
+        // Met à jour la ligne existante
+        sheet.getRange(keysMap[key], 2).setValue(updates[key]);
+      } else {
+        // Ajoute une nouvelle clé si elle n'existe pas
+        sheet.appendRow([key, updates[key]]);
+      }
+    }
+    return true;
+  } catch (e) {
+    Logger.log("Erreur dans saveContent: " + e.toString());
+    return false;
+  }
+}
+
+// =========================================================================
+// GESTION DES RÉFÉRENTIELS (JOB CODES & BU)
+// =========================================================================
+
+function getJobCodes() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName('Codes métiers');
+  
+  if (!sheet) return [];
+  
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return []; 
+  
+  const data = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
+  const jobCodes = [];
+  
+  for (let i = 0; i < data.length; i++) {
+    const code = data[i][0];       
+    const englishJob = data[i][1]; 
+    const frenchJob = data[i][2];  
+    const family = data[i][3];     
+    
+    if (!code || code.toString().trim() === '') continue; 
+    
+    jobCodes.push({
+      code: String(code).trim(),
+      name: String(frenchJob || englishJob).trim(), 
+      family: String(family || 'Autres').trim()
+    });
+  }
+  
+  return jobCodes;
+}
+
+function getBUData() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName('BU&Département');
+  
+  if (!sheet) return [];
+  
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return []; 
+  
+  // Lecture des colonnes A à D
+  const data = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
+  const result = [];
+  
+  for (let i = 0; i < data.length; i++) {
+    const colA = String(data[i][0] || '').trim(); // Code Département
+    const colB = String(data[i][1] || '').trim(); // Département
+    const colC = String(data[i][2] || '').trim(); // Code BU
+    const colD = String(data[i][3] || '').trim(); // BU
+    
+    // On ne garde la ligne que si au moins l'une des colonnes contient du texte
+    if (colA !== '' || colB !== '' || colC !== '' || colD !== '') {
+      result.push({
+        codeDept: colA,
+        dept: colB,
+        codeBu: colC,
+        bu: colD
+      });
+    }
+  }
+  
+  return result;
+}
+
+// =========================================================================
+// GESTION DE LA PROGRESSION UTILISATEUR ET DE L'XP
+// =========================================================================
+
+/**
+ * Logue l'action détaillée de l'utilisateur
+ */
+function logAction(email, part, details) {
+  try {
+    const sheetName = "Suivi_Formation";
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    let sheet = ss.getSheetByName(sheetName);
+
+    if (!sheet) {
+      sheet = ss.insertSheet(sheetName);
+      sheet.appendRow(["Date et Heure", "Email", "Partie / Étape", "Détails du résultat", "Type de formation"]);
+      sheet.getRange("A1:E1").setFontWeight("bold").setBackground("#f3f4f6");
+    } else {
+      // S'assure que la colonne E possède l'en-tête si l'onglet existait déjà
+      if (sheet.getRange("E1").getValue() === "") {
+        sheet.getRange("E1").setValue("Type de formation").setFontWeight("bold").setBackground("#f3f4f6");
+      }
+    }
+
+    const timestamp = new Date();
+    // On ajoute 'PM/Sales' à la 5ème position (Colonne E)
+    sheet.appendRow([timestamp, email, part, details, "PM/Sales"]);
+    return true;
+  } catch (e) {
+    Logger.log("Erreur dans logAction: " + e.toString());
+    return false;
+  }
+}
+
+/**
+ * Enregistre une action spécifique dans la Matrice_Suivi de manière dynamique
+ */
+function logUserProgress(email, taskKey, dateStr) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  
+  // 1. Log dans l'historique complet via logAction
+  logAction(email, taskKey, dateStr);
+
+  // 2. Log dans la Matrice de progression (Matrice_Suivi)
+  let sheet = ss.getSheetByName('Matrice_Suivi');
+  if (!sheet) {
+    sheet = ss.insertSheet('Matrice_Suivi');
+    sheet.appendRow(['Email']); 
+    sheet.getRange(1, 1, 1, 1).setFontWeight("bold").setBackground("#f3f4f6");
+    sheet.setFrozenRows(1);
+  }
+
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+
+  // Trouve la colonne de cette tâche, ou crée-la si elle n'existe pas
+  let colIndex = headers.indexOf(taskKey);
+  if (colIndex === -1) {
+    colIndex = headers.length;
+    sheet.getRange(1, colIndex + 1).setValue(taskKey);
+    sheet.getRange(1, colIndex + 1).setFontWeight("bold").setBackground("#f3f4f6");
+  }
+
+  // Trouve l'utilisateur, ou crée-le
+  let userRow = -1;
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === email) {
+      userRow = i + 1;
+      break;
+    }
+  }
+
+  if (userRow === -1) {
+    sheet.appendRow([email]);
+    userRow = sheet.getLastRow();
+  }
+
+  // Écrit la date de validation
+  sheet.getRange(userRow, colIndex + 1).setValue(dateStr);
+}
+
+/**
+ * Récupère la progression sous forme de dictionnaire d'objets
+ */
+function getUserProgress(email) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName('Matrice_Suivi');
+  
+  let progressData = {};
+  if (!sheet) return progressData;
+  
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === email) {
+      for (let j = 1; j < headers.length; j++) {
+        if (data[i][j] && data[i][j] !== '') {
+          // On associe la clé d'en-tête à la valeur de la cellule (date)
+          progressData[headers[j]] = String(data[i][j]);
+        }
+      }
+      break;
+    }
+  }
+  
+  return progressData;
+}
+
+/**
+ * Réinitialise la progression de l'utilisateur (Bouton Reset)
+ */
+function resetUserProgress(email) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName('Matrice_Suivi');
+    if (!sheet) return;
+
+    const data = sheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] === email) {
+        // Efface toutes les colonnes après l'Email (Colonne 1) pour cet utilisateur
+        const numCols = sheet.getLastColumn();
+        if(numCols > 1) {
+          sheet.getRange(i + 1, 2, 1, numCols - 1).clearContent();
+        }
+        break;
+      }
+    }
+    
+    logAction(email, "Reset", "Réinitialisation de la progression");
+  } catch(e) {
+    Logger.log("Erreur resetUserProgress : " + e.toString());
+  }
+}
+
+// =========================================================================
+// GESTION DU FICHIER TEMPORAIRE PARTIE 4
+// =========================================================================
+
+/**
+ * Crée une copie du modèle de Plan de Charge pour l'utilisateur
+ */
+function createTempSheet(userEmail) {
+  try {
+    const masterId = '1XS3q1TF4z1CW_84bkhNZlgxG4sMxHs3fg_Bk9QIYNmU'; 
+    const masterFile = DriveApp.getFileById(masterId);
+    
+    const tempFile = masterFile.makeCopy('SIMULATION_PlanCharge_' + (userEmail || 'Demo'));
+    
+    // Le correctif est ici : on limite le partage au domaine de l'entreprise
+    tempFile.setSharing(DriveApp.Access.DOMAIN_WITH_LINK, DriveApp.Permission.EDIT);
+    
+    return { success: true, id: tempFile.getId() };
+  } catch (e) {
+    Logger.log("Erreur createTempSheet: " + e.toString());
+    return { success: false, message: "Impossible de créer le fichier de simulation : " + e.toString() };
+  }
+}
+
+/**
+ * Supprime le fichier temporaire après validation
+ */
+function deleteTempSheet(sheetId) {
+  try {
+    DriveApp.getFileById(sheetId).setTrashed(true);
+    return { success: true };
+  } catch (e) {
+    Logger.log("Erreur deleteTempSheet: " + e.toString());
+    return { success: false, message: e.toString() };
+  }
+}
+
+/**
+ * Vérifie l'exercice de l'utilisateur
+ * (Mise à jour : prend l'ID directement au lieu de parser l'URL)
+ */
+/**
+ * Vérifie l'exercice de l'utilisateur (Partie 4)
+ */
+function checkUserSheetBackend(sheetId) {
+  try {
+    if (!sheetId) return { success: false, message: "ID du document manquant." };
+    var ss = SpreadsheetApp.openById(sheetId);
+    
+    // -----------------------------------------
+    // 1. Vérification de l'onglet ID_Card
+    // -----------------------------------------
+    var idCard = ss.getSheetByName('ID_Card');
+    if (!idCard) return { success: false, message: "❌ L'onglet 'ID_Card' est introuvable." };
+    
+    // On extrait tout le texte de l'onglet pour chercher les mots-clés
+    var idCardData = idCard.getDataRange().getDisplayValues().flat().join(" ").toUpperCase();
+    
+    var idCardErrors = [];
+    if (!idCardData.includes("01/01/2030")) idCardErrors.push("❌ Date de début (01/01/2030) introuvable dans ID_Card.");
+    if (!idCardData.includes("31/03/2030")) idCardErrors.push("❌ Date de fin (31/03/2030) introuvable dans ID_Card.");
+    if (!idCardData.includes("AT35")) idCardErrors.push("❌ BU 'AT35' introuvable dans ID_Card.");
+    
+    // -----------------------------------------
+    // 2. Vérification de l'onglet Workload
+    // -----------------------------------------
+    var workload = ss.getSheetByName('Workload');
+    if (!workload) return { success: false, message: "❌ L'onglet 'Workload' est introuvable." };
+    
+    var data = workload.getDataRange().getValues();
+    var h231Row = null;
+    var h110Row = null;
+    
+    for (var i = 0; i < data.length; i++) {
+      var rowStr = data[i].join(" ").toUpperCase();
+      if (rowStr.includes("H231")) h231Row = data[i];
+      if (rowStr.includes("H110")) h110Row = data[i];
+    }
+    
+    var workloadErrors = [];
+    
+    // --- Analyse H231 ---
+    if (!h231Row) {
+       workloadErrors.push("❌ Ligne pour le métier H231 introuvable.");
+    } else {
+       var sum231 = h231Row.reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0);
+       if (sum231 !== 10) workloadErrors.push("❌ Le total des heures pour H231 doit être de 10h (trouvé: " + sum231 + "h).");
+    }
+    
+    // --- Analyse H110 ---
+    if (!h110Row) {
+       workloadErrors.push("❌ Ligne pour le métier H110 introuvable.");
+    } else {
+       var sum110 = h110Row.reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0);
+       if (sum110 !== 30) workloadErrors.push("❌ Le total des heures pour H110 doit être de 30h (trouvé: " + sum110 + "h).");
+       
+       // Vérification simple s'il y a du texte dans les colonnes de référentiel (Cost Center / UAP)
+       var textCount = h110Row.filter(cell => typeof cell === 'string' && cell.trim() !== '').length;
+       if (textCount < 3) workloadErrors.push("❌ Il manque des informations d'affectation (Cost Center, UAP ou Sub CC) sur la ligne H110.");
+    }
+    
+    // -----------------------------------------
+    // 3. Bilan
+    // -----------------------------------------
+    var allErrors = idCardErrors.concat(workloadErrors);
+    
+    if (allErrors.length === 0) {
+       return { 
+         success: true, 
+         message: "✅ Ingestion réussie et données conformes !\n• ID_Card : Période du 01/01/30 au 31/03/30 et BU (AT35) reconnues.\n• Workload : H231 (10h génériques) et H110 (30h affectées) validés." 
+       };
+    } else {
+       return { 
+         success: false, 
+         message: "L'ingestion a échoué. Voici le rapport d'erreurs :\n" + allErrors.join("\n") 
+       };
+    }
+    
+  } catch (e) {
+    return { success: false, message: "Erreur serveur : " + e.toString() };
+  }
+}
